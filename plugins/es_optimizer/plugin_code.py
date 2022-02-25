@@ -95,3 +95,5 @@ def background_task(self, db_id: int) -> str:
         STORE.persist_task_result(
             db_id, output, "es-optimizer.txt", "text", "text/plain"
         )
+
+    return "finished"
