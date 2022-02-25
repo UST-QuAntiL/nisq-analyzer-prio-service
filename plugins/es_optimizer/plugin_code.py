@@ -24,15 +24,15 @@ from qhana_plugin_runner.tasks import save_task_error, save_task_result
 # before any of the requirements specified in the method are imported!
 ################################################################################
 
-from .api import PLUGIN_BLP, EsOptimizerParametersSchema
+from .api import PLUGIN_BLP, RankSchema
 from .plugin import EsOptimizer
 
 
-@PLUGIN_BLP.route("/process/")
+@PLUGIN_BLP.route("/rank")
 class ProcessView(MethodView):
     """Start a long running processing task."""
 
-    @PLUGIN_BLP.arguments(EsOptimizerParametersSchema(unknown=EXCLUDE), location="form")
+    @PLUGIN_BLP.arguments(RankSchema(unknown=EXCLUDE), location="json")
     @PLUGIN_BLP.response(HTTPStatus.SEE_OTHER)
     @PLUGIN_BLP.require_jwt("jwt", optional=True)
     def post(self, arguments):
@@ -65,6 +65,7 @@ class ProcessView(MethodView):
             url_for("tasks-api.TaskView", task_id=str(db_task.id)), HTTPStatus.SEE_OTHER
         )
 
+
 TASK_LOGGER = get_task_logger(__name__)
 
 
@@ -84,6 +85,7 @@ def background_task(self, db_id: int) -> str:
 
     # deserialize task parameters
     task_parameters: Dict[str, Any] = loads(task_data.parameters or "{}")
+    TASK_LOGGER.info(task_parameters)
 
     ############################################################################
     # TODO implement your background task
