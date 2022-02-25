@@ -28,15 +28,28 @@ PLUGIN_BLP = SecurityBlueprint( #SecurityBlueprint for eventual JWT support
 )
 
 
+class MetricSchema(FrontendFormBaseSchema):
+    weight = ma.fields.Float(
+        required=True,
+        allow_none=False
+    )
+    is_cost = ma.fields.Boolean(
+        required=True,
+        allow_none=False
+    )
+
+
 # Input parameters of the plugin
 class RankSchema(FrontendFormBaseSchema):
     method = ma.fields.String(
         required=True,
         allow_none=False
     )
-    weights = ma.fields.Dict(
+    metrics = ma.fields.Dict(
         keys=ma.fields.String(),
-        values=ma.fields.Float(),
+        values=ma.fields.Nested(
+            MetricSchema
+        ),
         required=True,
         allow_none=False,
     )
