@@ -71,6 +71,32 @@ class ProcessView(MethodView):
 TASK_LOGGER = get_task_logger(__name__)
 
 
+def get_metrics_from_compiled_circuits(compiled_circuits: List, metric_names: List[str]) -> np.ndarray:
+    metrics = np.zeros((len(compiled_circuits), len(metric_names)), dtype=float)
+
+    for i, compiled_circuit in enumerate(compiled_circuits):
+        for j, metric_name in enumerate(metric_names):
+            metrics[i, j] = compiled_circuit[metric_name]
+
+    return metrics
+
+
+def parse_metric_info(task_parameters: Dict) -> Tuple[np.ndarray, np.ndarray, List[str]]:
+    weights = np.zeros(len(task_parameters["metrics"]), dtype=float)
+    is_cost = np.zeros(len(task_parameters["metrics"]), dtype=float)  # 1.0 = profit, -1.0 = cost
+    metric_names = []
+    metric_index = 0
+
+    for metric_name, metric_data in task_parameters["metrics"].items():
+        weights[metric_index] = metric_data["weight"]
+        is_cost[metric_index] = -1.0 if metric_data["is_cost"] is True else 1.0
+        metric_names.append(metric_name)
+
+        metric_index += 1
+
+    return weights, is_cost, metric_names
+
+
 # task names must be globally unique => use full versioned plugin identifier to scope name
 @CELERY.task(name=f"{EsOptimizer.instance.identifier}.demo_task", bind=True)
 def rank_task(self, db_id: int) -> str:
@@ -88,32 +114,10 @@ def rank_task(self, db_id: int) -> str:
     # deserialize task parameters
     task_parameters: Dict[str, Any] = loads(task_data.parameters or "{}")
 
-    weights = np.zeros(len(task_parameters["metrics"]), dtype=float)
-    is_cost = np.zeros(len(task_parameters["metrics"]), dtype=float)  # 1.0 = profit, -1.0 = cost
-    metric_names = []
-    metric_index = 0
-
-    for metric_name, metric_data in task_parameters["metrics"].items():
-        weights[metric_index] = metric_data["weight"]
-        is_cost[metric_index] = -1.0 if metric_data["is_cost"] is True else 1.0
-        metric_names.append(metric_name)
-
-        metric_index += 1
-
-    TASK_LOGGER.info("weights")
-    TASK_LOGGER.info(weights)
-    TASK_LOGGER.info("is_cost")
-    TASK_LOGGER.info(is_cost)
+    weights, is_cost, metric_names = parse_metric_info(task_parameters)
 
     compiled_circuits = task_parameters["circuits"][0]["compiled_circuits"]
-    metrics = np.zeros((len(compiled_circuits), len(task_parameters["metrics"])), dtype=float)
-
-    for i, compiled_circuit in enumerate(compiled_circuits):
-        for j, metric_name in enumerate(metric_names):
-            metrics[i, j] = compiled_circuit[metric_name]
-
-    TASK_LOGGER.info("metrics")
-    TASK_LOGGER.info(metrics)
+    metrics = get_metrics_from_compiled_circuits(compiled_circuits, metric_names)
 
     if task_parameters["method"] == "topsis":
         topsis = TOPSIS()
