@@ -1,14 +1,4 @@
 services:
-  backend:
-    build: https://github.com/UST-QuAntiL/qhana-backend.git#main
-    image: qhana-backend
-    ports:
-      - 9090:9090
-  ui:
-    build: https://github.com/UST-QuAntiL/qhana-ui.git#main
-    image: qhana-ui
-    ports:
-      - 4200:4200
   redis:
     image: "redis:latest"
     ports:
@@ -20,8 +10,7 @@ services:
       - full
   qhana-plugin-runner:
     platform: linux/amd64
-    build: https://github.com/UST-QuAntiL/qhana-plugin-runner.git#main
-    image: qhana-plugin-runner
+    image: ghcr.io/ust-quantil/qhana-plugin-runner:main
     depends_on:
       - redis-internal
       - postgres
@@ -29,17 +18,17 @@ services:
       - plugins
       - full
     ports:
-      - 5000:5005
+      - 5005:8080
     volumes:
       - instance:/app/instance
     environment:
+      CONCURRENCY: 2
       BROKER_URL: redis://redis-internal:6379
       RESULT_BACKEND: redis://redis-internal:6379
       SQLALCHEMY_DATABASE_URI: "postgresql+psycopg2://user:password@postgres:5432/default_db"
-    entrypoint: ["/app/start.sh"]
   worker:
-    build: https://github.com/UST-QuAntiL/qhana-plugin-runner.git#main
-    image: qhana-plugin-runner
+    platform: linux/amd64
+    image: ghcr.io/ust-quantil/qhana-plugin-runner:main
     depends_on:
       - qhana-plugin-runner
     profiles:
@@ -48,10 +37,11 @@ services:
     volumes:
       - instance:/app/instance
     environment:
+      CONTAINER_MODE: worker
+      CONCURRENCY: 2
       BROKER_URL: redis://redis-internal:6379
       RESULT_BACKEND: redis://redis-internal:6379
       SQLALCHEMY_DATABASE_URI: "postgresql+psycopg2://user:password@postgres:5432/default_db"
-    entrypoint: ["poetry", "run", "invoke", "worker"]
   redis-internal:
     image: "redis:latest"
     ports:
@@ -68,5 +58,13 @@ services:
     profiles:
       - plugins
       - full
+  backend:
+    image: ghcr.io/ust-quantil/qhana-backend:main
+    ports:
+      - 9090:9090
+  ui:
+    image: ghcr.io/ust-quantil/qhana-ui:main
+    ports:
+      - 8080:8080
 volumes:
   instance:
