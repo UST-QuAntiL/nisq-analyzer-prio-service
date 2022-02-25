@@ -26,5 +26,4 @@ class EsOptimizer(QHAnaPluginBase):
         return PLUGIN_BLP
 
     def get_requirements(self):
-        return dedent("""# place your plugin requirements in here
-        """)
+        return "pymcdm==1.0.5"
