@@ -1,17 +1,19 @@
 # when renaming this module also change the import in __init__.py
-
+import json
 from http import HTTPStatus
 from json import dumps, loads
 from tempfile import SpooledTemporaryFile
 from datetime import datetime
 from typing import Any, Mapping, Optional, List, Dict, Tuple
 
+import numpy as np
 from celery.canvas import chain
 from celery.utils.log import get_task_logger
 from flask import redirect
 from flask.helpers import url_for
 from flask.views import MethodView
 from marshmallow import EXCLUDE
+from pymcdm.methods import TOPSIS
 
 from qhana_plugin_runner.celery import CELERY
 from qhana_plugin_runner.db.models.tasks import ProcessingTask
@@ -85,17 +87,48 @@ def background_task(self, db_id: int) -> str:
 
     # deserialize task parameters
     task_parameters: Dict[str, Any] = loads(task_data.parameters or "{}")
-    TASK_LOGGER.info(task_parameters)
 
-    ############################################################################
-    # TODO implement your background task
-    ############################################################################
-    
-    # write output
-    with SpooledTemporaryFile(mode="w") as output:
-        output.write("TODO")
-        STORE.persist_task_result(
-            db_id, output, "es-optimizer.txt", "text", "text/plain"
-        )
+    weights = np.zeros(len(task_parameters["metrics"]), dtype=float)
+    is_cost = np.zeros(len(task_parameters["metrics"]), dtype=float)  # 1.0 = profit, -1.0 = cost
+    metric_names = []
+    metric_index = 0
+
+    for metric_name, metric_data in task_parameters["metrics"].items():
+        weights[metric_index] = metric_data["weight"]
+        is_cost[metric_index] = -1.0 if metric_data["is_cost"] is True else 1.0
+        metric_names.append(metric_name)
+
+        metric_index += 1
+
+    TASK_LOGGER.info("weights")
+    TASK_LOGGER.info(weights)
+    TASK_LOGGER.info("is_cost")
+    TASK_LOGGER.info(is_cost)
+
+    metrics = np.zeros((len(task_parameters["compiled_circuits"]), len(task_parameters["metrics"])), dtype=float)
+
+    for i, compiled_circuit in enumerate(task_parameters["compiled_circuits"]):
+        for j, metric_name in enumerate(metric_names):
+            metrics[i, j] = task_parameters["compiled_circuits"][i][metric_name]
+
+    TASK_LOGGER.info("metrics")
+    TASK_LOGGER.info(metrics)
+
+    if task_parameters["method"] == "topsis":
+        topsis = TOPSIS()
+        scores = topsis(metrics, weights, is_cost)
+        output_data = {}
+        compiled_circuit_ids = [circ["id"] for circ in task_parameters["compiled_circuits"]]
+
+        for compiled_circuit_id, score in zip(compiled_circuit_ids, scores):
+            output_data[compiled_circuit_id] = score
+
+        with SpooledTemporaryFile(mode="wt") as output_file:
+            json.dump(output_data, output_file)
+            STORE.persist_task_result(
+                db_id, output_file, "scores.json", "text", "application/json"
+            )
+    else:
+        raise ValueError("Unknown method: " + str(task_parameters["method"]))
 
     return "finished"
