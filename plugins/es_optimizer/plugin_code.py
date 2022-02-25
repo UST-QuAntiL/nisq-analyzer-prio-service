@@ -40,11 +40,11 @@ class ProcessView(MethodView):
     def post(self, arguments):
         """Start the background task."""
         # create a new task instance in DB with the relevant parameters
-        db_task = ProcessingTask(task_name=background_task.name, parameters=dumps(arguments))
+        db_task = ProcessingTask(task_name=rank_task.name, parameters=dumps(arguments))
         db_task.save(commit=True)
 
         # all tasks need to know about db id to load the db entry
-        task: chain = background_task.s(db_id=db_task.id) | save_task_result.s(
+        task: chain = rank_task.s(db_id=db_task.id) | save_task_result.s(
             db_id=db_task.id
         )
         # save errors appearing somewhere in task chain to db
@@ -73,7 +73,7 @@ TASK_LOGGER = get_task_logger(__name__)
 
 # task names must be globally unique => use full versioned plugin identifier to scope name
 @CELERY.task(name=f"{EsOptimizer.instance.identifier}.demo_task", bind=True)
-def background_task(self, db_id: int) -> str:
+def rank_task(self, db_id: int) -> str:
     """The main background task of the plugin ES Optimizer."""
     TASK_LOGGER.info(f"Starting new background task for plugin ES Optimizer with db id '{db_id}'")
 
@@ -105,11 +105,12 @@ def background_task(self, db_id: int) -> str:
     TASK_LOGGER.info("is_cost")
     TASK_LOGGER.info(is_cost)
 
-    metrics = np.zeros((len(task_parameters["compiled_circuits"]), len(task_parameters["metrics"])), dtype=float)
+    compiled_circuits = task_parameters["circuits"][0]["compiled_circuits"]
+    metrics = np.zeros((len(compiled_circuits), len(task_parameters["metrics"])), dtype=float)
 
-    for i, compiled_circuit in enumerate(task_parameters["compiled_circuits"]):
+    for i, compiled_circuit in enumerate(compiled_circuits):
         for j, metric_name in enumerate(metric_names):
-            metrics[i, j] = task_parameters["compiled_circuits"][i][metric_name]
+            metrics[i, j] = compiled_circuit[metric_name]
 
     TASK_LOGGER.info("metrics")
     TASK_LOGGER.info(metrics)
@@ -118,7 +119,7 @@ def background_task(self, db_id: int) -> str:
         topsis = TOPSIS()
         scores = topsis(metrics, weights, is_cost)
         output_data = {}
-        compiled_circuit_ids = [circ["id"] for circ in task_parameters["compiled_circuits"]]
+        compiled_circuit_ids = [circ["id"] for circ in compiled_circuits]
 
         for compiled_circuit_id, score in zip(compiled_circuit_ids, scores):
             output_data[compiled_circuit_id] = score

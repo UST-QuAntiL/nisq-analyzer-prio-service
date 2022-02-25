@@ -39,7 +39,20 @@ class MetricSchema(FrontendFormBaseSchema):
     )
 
 
-# Input parameters of the plugin
+class CircuitSchema(FrontendFormBaseSchema):
+    id = ma.fields.String(
+        required=True,
+        allow_none=False
+    )
+    compiled_circuits = ma.fields.List(
+        ma.fields.Dict(
+            keys=ma.fields.String()
+        ),
+        required=True,
+        allow_none=False
+    )
+
+
 class RankSchema(FrontendFormBaseSchema):
     method = ma.fields.String(
         required=True,
@@ -53,10 +66,8 @@ class RankSchema(FrontendFormBaseSchema):
         required=True,
         allow_none=False,
     )
-    compiled_circuits = ma.fields.List(
-        ma.fields.Dict(
-            keys=ma.fields.String()
-        ),
+    circuits = ma.fields.List(
+        ma.fields.Nested(CircuitSchema),
         required=True,
         allow_none=False
     )
