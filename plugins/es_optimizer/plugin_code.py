@@ -165,21 +165,23 @@ def rank_task(self, db_id: int) -> str:
     metrics = get_metrics_from_compiled_circuits(compiled_circuits, metric_names)
 
     if task_parameters["method"] == "topsis":
-        topsis = TOPSIS()
-        scores = topsis(metrics, weights, is_cost)
-        output_data = {}
-        compiled_circuit_ids = [circ["id"] for circ in compiled_circuits]
-
-        for compiled_circuit_id, score in zip(compiled_circuit_ids, scores):
-            output_data[compiled_circuit_id] = score
-
-        with SpooledTemporaryFile(mode="wt") as output_file:
-            json.dump(output_data, output_file)
-            STORE.persist_task_result(
-                db_id, output_file, "scores.json", "text", "application/json"
-            )
+        scores = TOPSIS()(metrics, weights, is_cost)
+    elif task_parameters["method"] == "promethee_ii":
+        scores = PROMETHEE_II("usual")(metrics, weights, is_cost)
     else:
         raise ValueError("Unknown method: " + str(task_parameters["method"]))
+
+    output_data = {}
+    compiled_circuit_ids = [circ["id"] for circ in compiled_circuits]
+
+    for compiled_circuit_id, score in zip(compiled_circuit_ids, scores):
+        output_data[compiled_circuit_id] = score
+
+    with SpooledTemporaryFile(mode="wt") as output_file:
+        json.dump(output_data, output_file)
+        STORE.persist_task_result(
+            db_id, output_file, "scores.json", "text", "application/json"
+        )
 
     return "finished"
 
