@@ -13,7 +13,8 @@ from flask import redirect
 from flask.helpers import url_for
 from flask.views import MethodView
 from marshmallow import EXCLUDE
-from pymcdm.methods import TOPSIS
+from pymcdm.methods import TOPSIS, PROMETHEE_II
+from pymcdm.methods.mcda_method import MCDA_method
 
 from qhana_plugin_runner.celery import CELERY
 from qhana_plugin_runner.db.models.tasks import ProcessingTask
@@ -183,41 +184,41 @@ def rank_task(self, db_id: int) -> str:
     return "finished"
 
 
-def objective_function(metrics: np.ndarray, histogram_intersection: np.ndarray, weights: np.ndarray, is_cost: np.ndarray) -> float:
+def objective_function(mcda: MCDA_method, metrics: np.ndarray, histogram_intersection: np.ndarray, weights: np.ndarray, is_cost: np.ndarray) -> float:
     target_scores = histogram_intersection
-    topsis_scores = TOPSIS()(metrics, weights, is_cost)
+    scores = mcda(metrics, weights, is_cost)
 
     # normalization
     target_scores -= np.min(target_scores)
     target_scores /= np.max(target_scores)
 
-    topsis_scores -= np.min(topsis_scores)
-    topsis_scores /= np.max(topsis_scores)
+    scores -= np.min(scores)
+    scores /= np.max(scores)
 
     # mean square error
-    loss = np.mean((target_scores - topsis_scores) * (target_scores - topsis_scores))
+    loss = np.mean((target_scores - scores) * (target_scores - scores))
 
     return loss.item()
 
 
 def objective_function_array(
-    metrics: np.ndarray, histogram_intersection: np.ndarray, weights: np.ndarray, is_cost: np.ndarray) -> np.ndarray:
-    return np.array([objective_function(metrics, histogram_intersection, w, is_cost) for w in weights], dtype=float)
+    mcda: MCDA_method, metrics: np.ndarray, histogram_intersection: np.ndarray, weights: np.ndarray, is_cost: np.ndarray) -> np.ndarray:
+    return np.array([objective_function(mcda, metrics, histogram_intersection, w, is_cost) for w in weights], dtype=float)
 
 
 def objective_function_all_circuits(
-    weights: np.ndarray, metrics: List[np.ndarray], histogram_intersections: List[np.ndarray], is_cost: np.ndarray) -> float:
+    mcda: MCDA_method, weights: np.ndarray, metrics: List[np.ndarray], histogram_intersections: List[np.ndarray], is_cost: np.ndarray) -> float:
     error = 0.0
 
     for i in range(len(metrics)):
-        error += objective_function(metrics[i], histogram_intersections[i], weights, is_cost)
+        error += objective_function(mcda, metrics[i], histogram_intersections[i], weights, is_cost)
 
     error = error / len(metrics)
 
     return error
 
 
-def evolutionary_strategy(metrics: List[np.ndarray], histogram_intersection: List[np.ndarray], is_cost: np.ndarray) -> np.ndarray:
+def evolutionary_strategy(mcda: MCDA_method, metrics: List[np.ndarray], histogram_intersection: List[np.ndarray], is_cost: np.ndarray) -> np.ndarray:
     population_size = 20
     reproduction_factor = 4
     mutation_factor = 0.05
@@ -225,10 +226,10 @@ def evolutionary_strategy(metrics: List[np.ndarray], histogram_intersection: Lis
     weights = np.random.random((population_size, metrics_cnt))
 
     for i in range(100):
-        obj_values = objective_function_array(metrics[0], histogram_intersection[0], weights, is_cost)
+        obj_values = objective_function_array(mcda, metrics[0], histogram_intersection[0], weights, is_cost)
 
         for m, hi in zip(metrics[1:], histogram_intersection[1:]):
-            obj_values += objective_function_array(m, hi, weights, is_cost)
+            obj_values += objective_function_array(mcda, m, hi, weights, is_cost)
 
         obj_values /= len(metrics)
 
@@ -277,21 +278,23 @@ def learn_ranking_task(self, db_id: int) -> str:
         histogram_intersections.append(get_histogram_intersections_from_compiled_circuits(compiled_circuits))
 
     if task_parameters["method"] == "topsis":
-        best_weights = evolutionary_strategy(metrics, histogram_intersections, is_cost)
-
-        with SpooledTemporaryFile(mode="wt") as output_file:
-            metric_weights = {}
-
-            for name, weight in zip(metric_names, best_weights):
-                metric_weights[name] = weight
-
-            json.dump(metric_weights, output_file)
-            STORE.persist_task_result(
-                db_id, output_file, "weights.json", "text", "application/json"
-            )
+        best_weights = evolutionary_strategy(TOPSIS(), metrics, histogram_intersections, is_cost)
+    elif task_parameters["method"] == "promethee_ii":
+        best_weights = evolutionary_strategy(PROMETHEE_II("usual"), metrics, histogram_intersections, is_cost)
     else:
         msg = "Unknown method: " + str(task_parameters["method"])
         TASK_LOGGER.error(msg)
         raise ValueError(msg)
+
+    with SpooledTemporaryFile(mode="wt") as output_file:
+        metric_weights = {}
+
+        for name, weight in zip(metric_names, best_weights):
+            metric_weights[name] = weight
+
+        json.dump(metric_weights, output_file)
+        STORE.persist_task_result(
+            db_id, output_file, "weights.json", "text", "application/json"
+        )
 
     return "finished"
