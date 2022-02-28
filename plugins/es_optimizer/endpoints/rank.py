@@ -5,6 +5,7 @@ from json import dumps, loads
 from tempfile import SpooledTemporaryFile
 from typing import Optional, Dict, Any
 
+import numpy as np
 from celery import chain
 from celery.utils.log import get_task_logger
 from flask import redirect, url_for
@@ -91,11 +92,19 @@ def rank_task(self, db_id: int) -> str:
     else:
         raise ValueError("Unknown method: " + str(task_parameters["method"]))
 
-    output_data = {}
+    output_data = {
+        "scores": {},
+        "ranking": []
+    }
     compiled_circuit_ids = [circ["id"] for circ in compiled_circuits]
 
     for compiled_circuit_id, score in zip(compiled_circuit_ids, scores):
-        output_data[compiled_circuit_id] = score
+        output_data["scores"][compiled_circuit_id] = score
+
+    sorted_indices = np.argsort(-scores)
+    sorted_ids = np.array(compiled_circuit_ids)[sorted_indices]
+
+    output_data["ranking"] = list(sorted_ids)
 
     with SpooledTemporaryFile(mode="wt") as output_file:
         json.dump(output_data, output_file)
