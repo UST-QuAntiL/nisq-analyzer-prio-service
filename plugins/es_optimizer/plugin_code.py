@@ -290,6 +290,8 @@ def learn_ranking_task(self, db_id: int) -> str:
                 db_id, output_file, "weights.json", "text", "application/json"
             )
     else:
-        raise ValueError("Unknown method: " + str(task_parameters["method"]))
+        msg = "Unknown method: " + str(task_parameters["method"])
+        TASK_LOGGER.error(msg)
+        raise ValueError(msg)
 
     return "finished"
