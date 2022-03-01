@@ -17,6 +17,7 @@ from qhana_plugin_runner.db.models.tasks import ProcessingTask
 from qhana_plugin_runner.storage import STORE
 from qhana_plugin_runner.tasks import save_task_result, save_task_error
 from scipy.optimize import minimize
+from sklearn import preprocessing
 
 from plugins.es_optimizer.api import PLUGIN_BLP, LearnRankingSchema
 from plugins.es_optimizer.evolutionary_strategy import evolutionary_strategy
@@ -110,7 +111,8 @@ def learn_ranking_task(self, db_id: int) -> str:
         result = minimize(
             objective_function_all_circuits, np.random.random(weights.shape), (mcda, metrics, histogram_intersections, is_cost), method=task_parameters["learning_method"],
             options={"disp": True})
-        best_weights = result.x
+        best_weights = preprocessing.MinMaxScaler().fit_transform(result.x.reshape((-1, 1))).reshape((-1))
+        best_weights /= np.sum(best_weights)
 
     with SpooledTemporaryFile(mode="wt") as output_file:
         metric_weights = {}

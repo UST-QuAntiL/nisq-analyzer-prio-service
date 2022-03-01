@@ -46,6 +46,6 @@ def evolutionary_strategy(
 
         weights = np.concatenate(new_weights, axis=0)
 
-    best_weights = preprocessing.MinMaxScaler().fit_transform(weights[0])
+    best_weights = preprocessing.MinMaxScaler().fit_transform(weights[0].reshape((-1, 1))).reshape((-1))
 
     return best_weights / np.sum(best_weights)
