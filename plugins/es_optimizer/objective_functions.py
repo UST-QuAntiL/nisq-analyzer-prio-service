@@ -11,6 +11,7 @@ TASK_LOGGER = get_task_logger(__name__)
 def objective_function(mcda: MCDA_method, metrics: np.ndarray, histogram_intersection: np.ndarray, weights: np.ndarray, is_cost: np.ndarray) -> float:
     target_scores = histogram_intersection
     weights = preprocessing.MinMaxScaler().fit_transform(weights)
+    weights /= np.sum(weights)
     scores = mcda(metrics, weights, is_cost)
 
     # normalization

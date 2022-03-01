@@ -95,4 +95,6 @@ def standard_genetic_algorithm(
 
         weights = np.stack(new_weights)
 
-    return preprocessing.MinMaxScaler().fit_transform(weights[0])
+    best_weights = preprocessing.MinMaxScaler().fit_transform(weights[0])
+
+    return best_weights / np.sum(best_weights)

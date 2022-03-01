@@ -83,6 +83,7 @@ def rank_task(self, db_id: int) -> str:
 
     weights, is_cost, metric_names = parse_metric_info(task_parameters)
     weights = preprocessing.MinMaxScaler().fit_transform(weights)
+    weights /= np.sum(weights)
 
     compiled_circuits = task_parameters["circuits"][0]["compiled_circuits"]
     metrics = get_metrics_from_compiled_circuits(compiled_circuits, metric_names)

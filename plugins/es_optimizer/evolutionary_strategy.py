@@ -3,6 +3,7 @@ from typing import List
 import numpy as np
 from celery.utils.log import get_task_logger
 from pymcdm.methods.mcda_method import MCDA_method
+from sklearn import preprocessing
 
 from plugins.es_optimizer.objective_functions import objective_function_array
 
@@ -45,4 +46,6 @@ def evolutionary_strategy(
 
         weights = np.concatenate(new_weights, axis=0)
 
-    return preprocessing.MinMaxScaler().fit_transform(weights[0])
+    best_weights = preprocessing.MinMaxScaler().fit_transform(weights[0])
+
+    return best_weights / np.sum(best_weights)
