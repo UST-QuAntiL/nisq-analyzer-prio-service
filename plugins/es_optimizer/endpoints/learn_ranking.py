@@ -101,8 +101,11 @@ def learn_ranking_task(self, db_id: int) -> str:
     with SpooledTemporaryFile(mode="wt") as output_file:
         metric_weights = {}
 
-        for name, weight in zip(metric_names, best_weights):
-            metric_weights[name] = weight
+        for name, ic, weight in zip(metric_names, is_cost, best_weights):
+            metric_weights[name] = {
+                "weight": weight,
+                "isCost": True if ic == -1.0 else False
+            }
 
         json.dump(metric_weights, output_file)
         STORE.persist_task_result(
