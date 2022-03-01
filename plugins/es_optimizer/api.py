@@ -30,8 +30,8 @@ PLUGIN_BLP = SecurityBlueprint( #SecurityBlueprint for eventual JWT support
 
 class MetricSchema(FrontendFormBaseSchema):
     weight = ma.fields.Float(
-        required=False,
-        allow_none=True
+        required=True,
+        allow_none=False
     )
     is_cost = ma.fields.Boolean(
         required=True,

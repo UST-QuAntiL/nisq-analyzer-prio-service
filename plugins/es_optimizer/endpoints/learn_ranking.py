@@ -5,6 +5,7 @@ from json import dumps, loads
 from tempfile import SpooledTemporaryFile
 from typing import Optional, Dict, Any
 
+import numpy as np
 from celery import chain
 from celery.utils.log import get_task_logger
 from flask import redirect, url_for
@@ -15,12 +16,14 @@ from qhana_plugin_runner.celery import CELERY
 from qhana_plugin_runner.db.models.tasks import ProcessingTask
 from qhana_plugin_runner.storage import STORE
 from qhana_plugin_runner.tasks import save_task_result, save_task_error
+from scipy.optimize import minimize, OptimizeResult
 
 from plugins.es_optimizer.api import PLUGIN_BLP, RankSchema
+from plugins.es_optimizer.evolutionary_strategy import evolutionary_strategy
+from plugins.es_optimizer.objective_functions import objective_function_all_circuits
 from plugins.es_optimizer.parsing import get_metrics_from_compiled_circuits, \
     get_histogram_intersections_from_compiled_circuits, parse_metric_info
 from plugins.es_optimizer.plugin import EsOptimizer
-from plugins.es_optimizer.evolutionary_strategy import evolutionary_strategy
 from plugins.es_optimizer.standard_genetic_algorithm import standard_genetic_algorithm
 
 
@@ -104,9 +107,10 @@ def learn_ranking_task(self, db_id: int) -> str:
     elif task_parameters["learning_method"] == "ga":
         best_weights = standard_genetic_algorithm(mcda, metrics, histogram_intersections, is_cost)
     else:
-        msg = "Unknown learning method: " + str(task_parameters["learning_method"])
-        TASK_LOGGER.error(msg)
-        raise ValueError(msg)
+        result = minimize(
+            objective_function_all_circuits, np.random.random(weights.shape), (mcda, metrics, histogram_intersections, is_cost), method=task_parameters["learning_method"],
+            options={"disp": True})
+        best_weights = result.x
 
     with SpooledTemporaryFile(mode="wt") as output_file:
         metric_weights = {}
