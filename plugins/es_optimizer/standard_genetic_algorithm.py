@@ -4,6 +4,7 @@ from typing import List, Tuple
 import numpy as np
 from celery.utils.log import get_task_logger
 from pymcdm.methods.mcda_method import MCDA_method
+from sklearn import preprocessing
 
 from plugins.es_optimizer.objective_functions import objective_function_array
 
@@ -94,4 +95,4 @@ def standard_genetic_algorithm(
 
         weights = np.stack(new_weights)
 
-    return weights[0]
+    return preprocessing.MinMaxScaler().fit_transform(weights[0])

@@ -16,6 +16,7 @@ from qhana_plugin_runner.celery import CELERY
 from qhana_plugin_runner.db.models.tasks import ProcessingTask
 from qhana_plugin_runner.storage import STORE
 from qhana_plugin_runner.tasks import save_task_result, save_task_error
+from sklearn import preprocessing
 
 from plugins.es_optimizer.api import PLUGIN_BLP, RankSchema
 from plugins.es_optimizer.parsing import get_metrics_from_compiled_circuits, parse_metric_info
@@ -81,6 +82,7 @@ def rank_task(self, db_id: int) -> str:
     task_parameters: Dict[str, Any] = loads(task_data.parameters or "{}")
 
     weights, is_cost, metric_names = parse_metric_info(task_parameters)
+    weights = preprocessing.MinMaxScaler().fit_transform(weights)
 
     compiled_circuits = task_parameters["circuits"][0]["compiled_circuits"]
     metrics = get_metrics_from_compiled_circuits(compiled_circuits, metric_names)
