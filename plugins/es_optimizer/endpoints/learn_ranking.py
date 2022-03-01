@@ -16,9 +16,9 @@ from qhana_plugin_runner.celery import CELERY
 from qhana_plugin_runner.db.models.tasks import ProcessingTask
 from qhana_plugin_runner.storage import STORE
 from qhana_plugin_runner.tasks import save_task_result, save_task_error
-from scipy.optimize import minimize, OptimizeResult
+from scipy.optimize import minimize
 
-from plugins.es_optimizer.api import PLUGIN_BLP, RankSchema
+from plugins.es_optimizer.api import PLUGIN_BLP, LearnRankingSchema
 from plugins.es_optimizer.evolutionary_strategy import evolutionary_strategy
 from plugins.es_optimizer.objective_functions import objective_function_all_circuits
 from plugins.es_optimizer.parsing import get_metrics_from_compiled_circuits, \
@@ -31,7 +31,7 @@ from plugins.es_optimizer.standard_genetic_algorithm import standard_genetic_alg
 class LearnRankingView(MethodView):
     """Start a long running processing task."""
 
-    @PLUGIN_BLP.arguments(RankSchema(unknown=EXCLUDE), location="json")
+    @PLUGIN_BLP.arguments(LearnRankingSchema(unknown=EXCLUDE), location="json")
     @PLUGIN_BLP.response(HTTPStatus.SEE_OTHER)
     @PLUGIN_BLP.require_jwt("jwt", optional=True)
     def post(self, arguments):

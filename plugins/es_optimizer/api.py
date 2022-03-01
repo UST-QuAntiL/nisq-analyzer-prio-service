@@ -58,9 +58,29 @@ class RankSchema(FrontendFormBaseSchema):
         required=True,
         allow_none=False
     )
+    metrics = ma.fields.Dict(
+        keys=ma.fields.String(),
+        values=ma.fields.Nested(
+            MetricSchema
+        ),
+        required=True,
+        allow_none=False,
+    )
+    circuits = ma.fields.List(
+        ma.fields.Nested(CircuitSchema),
+        required=True,
+        allow_none=False
+    )
+
+
+class LearnRankingSchema(FrontendFormBaseSchema):
+    mcda_method = ma.fields.String(
+        required=True,
+        allow_none=False
+    )
     learning_method = ma.fields.String(
-        required=False,
-        allow_none=True
+        required=True,
+        allow_none=False
     )
     metrics = ma.fields.Dict(
         keys=ma.fields.String(),
@@ -72,6 +92,31 @@ class RankSchema(FrontendFormBaseSchema):
     )
     circuits = ma.fields.List(
         ma.fields.Nested(CircuitSchema),
+        required=True,
+        allow_none=False
+    )
+
+
+class RankSensitivitySchema(FrontendFormBaseSchema):
+    mcda_method = ma.fields.String(
+        required=True,
+        allow_none=False
+    )
+    metrics = ma.fields.Dict(
+        keys=ma.fields.String(),
+        values=ma.fields.Nested(
+            MetricSchema
+        ),
+        required=True,
+        allow_none=False,
+    )
+    circuits = ma.fields.List(
+        ma.fields.Nested(CircuitSchema),
+        required=True,
+        allow_none=False
+    )
+    unitary_variations = ma.fields.List(
+        ma.fields.Float(),
         required=True,
         allow_none=False
     )
