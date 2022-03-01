@@ -115,7 +115,7 @@ class RankSensitivitySchema(FrontendFormBaseSchema):
         required=True,
         allow_none=False
     )
-    unitary_variations = ma.fields.List(
+    unitary_variation_ratios = ma.fields.List(
         ma.fields.Float(),
         required=True,
         allow_none=False
