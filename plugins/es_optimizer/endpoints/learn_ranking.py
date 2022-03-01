@@ -21,6 +21,7 @@ from plugins.es_optimizer.parsing import get_metrics_from_compiled_circuits, \
     get_histogram_intersections_from_compiled_circuits, parse_metric_info
 from plugins.es_optimizer.plugin import EsOptimizer
 from plugins.es_optimizer.evolutionary_strategy import evolutionary_strategy
+from plugins.es_optimizer.standard_genetic_algorithm import standard_genetic_algorithm
 
 
 @PLUGIN_BLP.route("/learn-ranking")
@@ -89,12 +90,21 @@ def learn_ranking_task(self, db_id: int) -> str:
         metrics.append(get_metrics_from_compiled_circuits(compiled_circuits, metric_names))
         histogram_intersections.append(get_histogram_intersections_from_compiled_circuits(compiled_circuits))
 
-    if task_parameters["method"] == "topsis":
-        best_weights = evolutionary_strategy(TOPSIS(), metrics, histogram_intersections, is_cost)
-    elif task_parameters["method"] == "promethee_ii":
-        best_weights = evolutionary_strategy(PROMETHEE_II("usual"), metrics, histogram_intersections, is_cost)
+    if task_parameters["mcda_method"] == "topsis":
+        mcda = TOPSIS()
+    elif task_parameters["mcda_method"] == "promethee_ii":
+        mcda = PROMETHEE_II("usual")
     else:
-        msg = "Unknown method: " + str(task_parameters["method"])
+        msg = "Unknown MCDA method: " + str(task_parameters["mcda_method"])
+        TASK_LOGGER.error(msg)
+        raise ValueError(msg)
+
+    if task_parameters["learning_method"] == "es":
+        best_weights = evolutionary_strategy(mcda, metrics, histogram_intersections, is_cost)
+    elif task_parameters["learning_method"] == "ga":
+        best_weights = standard_genetic_algorithm(mcda, metrics, histogram_intersections, is_cost)
+    else:
+        msg = "Unknown learning method: " + str(task_parameters["learning_method"])
         TASK_LOGGER.error(msg)
         raise ValueError(msg)
 

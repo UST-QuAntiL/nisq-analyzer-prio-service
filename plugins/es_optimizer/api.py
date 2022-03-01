@@ -30,8 +30,8 @@ PLUGIN_BLP = SecurityBlueprint( #SecurityBlueprint for eventual JWT support
 
 class MetricSchema(FrontendFormBaseSchema):
     weight = ma.fields.Float(
-        required=True,
-        allow_none=False
+        required=False,
+        allow_none=True
     )
     is_cost = ma.fields.Boolean(
         required=True,
@@ -54,9 +54,13 @@ class CircuitSchema(FrontendFormBaseSchema):
 
 
 class RankSchema(FrontendFormBaseSchema):
-    method = ma.fields.String(
+    mcda_method = ma.fields.String(
         required=True,
         allow_none=False
+    )
+    learning_method = ma.fields.String(
+        required=False,
+        allow_none=True
     )
     metrics = ma.fields.Dict(
         keys=ma.fields.String(),
