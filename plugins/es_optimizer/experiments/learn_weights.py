@@ -11,6 +11,7 @@ from plugins.es_optimizer.objective_functions import objective_function_all_circ
 from plugins.es_optimizer.standard_genetic_algorithm import standard_genetic_algorithm
 
 mcda_methods = [TOPSIS(), PROMETHEE_II("usual")]
+learning_methods = ["es", "ga", "COBYLA"]
 
 
 def learn_best_weights(
