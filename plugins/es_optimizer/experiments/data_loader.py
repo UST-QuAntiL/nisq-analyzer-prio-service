@@ -1,4 +1,4 @@
-from typing import List, Tuple
+from typing import List, Tuple, Dict
 
 import numpy as np
 import pandas as pd
@@ -59,6 +59,8 @@ def _filter_out_compilations_with_missing_data(data: DataFrame) -> DataFrame:
     return data
 
 
+# TODO: add training / test set split
+# TODO: add cross validation
 def get_metrics_and_histogram_intersections(data: DataFrame) -> Tuple[List[np.ndarray], List[np.ndarray]]:
     data = _filter_out_compilations_with_missing_data(data)
 
@@ -75,7 +77,16 @@ def get_metrics_and_histogram_intersections(data: DataFrame) -> Tuple[List[np.nd
     return metrics, histogram_intersections
 
 
+def convert_weights_array_to_dict(weights: np.ndarray) -> Dict[str, float]:
+    weights_dict = {}
+
+    for metric_name, weight in zip(metric_column_names, weights):
+        weights_dict[metric_name] = weight
+
+    return weights_dict
+
+
 if __name__ == "__main__":
-    data = load_csv_and_add_headers("Result_fake.csv")
-    # get_metrics_and_histogram_intersections(data)
-    _filter_out_compilations_with_missing_data(data)
+    data = load_csv_and_add_headers("Result_old.csv")
+    get_metrics_and_histogram_intersections(data)
+    # _filter_out_compilations_with_missing_data(data)
