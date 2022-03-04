@@ -1,8 +1,8 @@
 import numpy as np
 
 
-def convert_scores_to_ranking(scores: np.ndarray, higher_scores_is_better: bool) -> np.ndarray:
-    if higher_scores_is_better:
+def convert_scores_to_ranking(scores: np.ndarray, higher_scores_are_better: bool) -> np.ndarray:
+    if higher_scores_are_better:
         scores = -scores
 
     return np.argsort(np.argsort(scores))

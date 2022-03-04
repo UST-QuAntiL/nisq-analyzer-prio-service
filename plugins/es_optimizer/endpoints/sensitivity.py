@@ -18,6 +18,7 @@ from qhana_plugin_runner.storage import STORE
 from qhana_plugin_runner.tasks import save_task_result, save_task_error
 
 from plugins.es_optimizer.api import PLUGIN_BLP, RankSensitivitySchema
+from plugins.es_optimizer.experiments.ranking import convert_scores_to_ranking
 from plugins.es_optimizer.parsing import get_metrics_from_compiled_circuits, parse_metric_info
 from plugins.es_optimizer.plugin import EsOptimizer
 
@@ -92,7 +93,7 @@ def rank_sensitivity_task(self, db_id: int) -> str:
     else:
         raise ValueError("Unknown method: " + str(task_parameters["method"]))
 
-    original_ranking = np.argsort(-mcda(metrics, weights, is_cost))
+    original_ranking = convert_scores_to_ranking(mcda(metrics, weights, is_cost), True)
     unitary_variation_ratios = task_parameters["unitary_variation_ratios"]
 
     output_data = {
@@ -118,7 +119,7 @@ def rank_sensitivity_task(self, db_id: int) -> str:
             disturbed_weights /= np.sum(disturbed_weights)
             new_result["disturbed_weights"].append(disturbed_weights.tolist())
 
-            disturbed_ranking = np.argsort(-mcda(metrics, disturbed_weights, is_cost))
+            disturbed_ranking = convert_scores_to_ranking(mcda(metrics, disturbed_weights, is_cost), True)
             new_result["disturbed_rankings"].append(disturbed_ranking.tolist())
 
         output_data["results"].append(new_result)
