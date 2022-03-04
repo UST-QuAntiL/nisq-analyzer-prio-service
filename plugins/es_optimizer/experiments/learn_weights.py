@@ -56,20 +56,34 @@ def calculate_average_spearman(mcda: MCDA_method, metrics: List[np.ndarray], his
 def main():
     data = load_csv_and_add_headers("data/Result_old.csv")
     metrics, histogram_intersections = get_metrics_and_histogram_intersections(data)
-    training_metrics, training_histogram_intersections, test_metrics, test_histogram_intersections = \
-        create_random_training_test_split(metrics, histogram_intersections, 0.7)
+    training_spearman = []
+    test_spearman = []
+    iteration_cnt = 100
 
-    weights = learn_best_weights(
-        learning_methods[0], mcda_methods[0], training_metrics, training_histogram_intersections, is_cost)
+    for _ in range(iteration_cnt):
+        training_metrics, training_histogram_intersections, test_metrics, test_histogram_intersections = \
+            create_random_training_test_split(metrics, histogram_intersections, 0.7)
+        weights = learn_best_weights(
+            learning_methods[0], mcda_methods[0], training_metrics, training_histogram_intersections, is_cost)
 
-    # weights_dict = convert_weights_array_to_dict(weights)
-    # pprint(weights_dict)
+        # weights_dict = convert_weights_array_to_dict(weights)
+        # pprint(weights_dict)
 
-    # print(create_mcda_ranking(mcda_methods[0], training_metrics[0], weights, is_cost))
-    # print(convert_scores_to_ranking(training_histogram_intersections[0], True))
+        # print(create_mcda_ranking(mcda_methods[0], training_metrics[0], weights, is_cost))
+        # print(convert_scores_to_ranking(training_histogram_intersections[0], True))
 
-    print(calculate_average_spearman(mcda_methods[0], training_metrics, training_histogram_intersections, weights))
-    print(calculate_average_spearman(mcda_methods[0], test_metrics, test_histogram_intersections, weights))
+        training_spearman.append(calculate_average_spearman(mcda_methods[0], training_metrics, training_histogram_intersections, weights))
+        test_spearman.append(calculate_average_spearman(mcda_methods[0], test_metrics, test_histogram_intersections, weights))
+        print(training_spearman[-1])
+        print(test_spearman[-1])
+        print()
+
+    print("training mean: " + str(np.mean(training_spearman)))
+    print("training std : " + str(np.std(training_spearman)))
+    print("training standard error of estimated mean: " + str(np.std(training_spearman) / np.sqrt(iteration_cnt)))
+    print("test mean: " + str(np.mean(test_spearman)))
+    print("test std : " + str(np.std(test_spearman)))
+    print("test standard error of estimated mean: " + str(np.std(test_spearman) / np.sqrt(iteration_cnt)))
 
 
 if __name__ == "__main__":
