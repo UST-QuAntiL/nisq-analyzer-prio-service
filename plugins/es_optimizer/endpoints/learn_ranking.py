@@ -25,6 +25,7 @@ from plugins.es_optimizer.objective_functions import objective_function_all_circ
 from plugins.es_optimizer.parsing import get_metrics_from_compiled_circuits, \
     get_histogram_intersections_from_compiled_circuits, parse_metric_info
 from plugins.es_optimizer.plugin import EsOptimizer
+from plugins.es_optimizer.preprocessing import normalize_weights
 from plugins.es_optimizer.standard_genetic_algorithm import standard_genetic_algorithm
 
 
@@ -111,8 +112,7 @@ def learn_ranking_task(self, db_id: int) -> str:
         result = minimize(
             objective_function_all_circuits, np.random.random(weights.shape), (mcda, metrics, histogram_intersections, is_cost), method=task_parameters["learning_method"],
             options={"disp": True})
-        best_weights = preprocessing.MinMaxScaler().fit_transform(result.x.reshape((-1, 1))).reshape((-1))
-        best_weights /= np.sum(best_weights)
+        best_weights = normalize_weights(result.x)
 
     with SpooledTemporaryFile(mode="wt") as output_file:
         metric_weights = {}

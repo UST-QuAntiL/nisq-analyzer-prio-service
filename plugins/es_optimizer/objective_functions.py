@@ -5,13 +5,14 @@ from celery.utils.log import get_task_logger
 from pymcdm.methods.mcda_method import MCDA_method
 from sklearn import preprocessing
 
+from plugins.es_optimizer.preprocessing import normalize_weights
+
 TASK_LOGGER = get_task_logger(__name__)
 
 
 def objective_function(mcda: MCDA_method, metrics: np.ndarray, histogram_intersection: np.ndarray, weights: np.ndarray, is_cost: np.ndarray) -> float:
     target_scores = histogram_intersection
-    weights = preprocessing.MinMaxScaler().fit_transform(weights.reshape((-1, 1))).reshape((-1))
-    weights /= np.sum(weights)
+    weights = normalize_weights(weights)
     scores = mcda(metrics, weights, is_cost)
 
     # normalization

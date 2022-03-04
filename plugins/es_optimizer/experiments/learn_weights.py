@@ -11,6 +11,7 @@ from plugins.es_optimizer.evolutionary_strategy import evolutionary_strategy
 from plugins.es_optimizer.experiments.tools.data_loader import load_csv_and_add_headers, \
     get_metrics_and_histogram_intersections, convert_weights_array_to_dict, is_cost
 from plugins.es_optimizer.objective_functions import objective_function_all_circuits
+from plugins.es_optimizer.preprocessing import normalize_weights
 from plugins.es_optimizer.standard_genetic_algorithm import standard_genetic_algorithm
 
 mcda_methods = [TOPSIS(), PROMETHEE_II("usual")]
@@ -31,8 +32,7 @@ def learn_best_weights(
             objective_function_all_circuits, np.random.random(metrics_cnt),
             (mcda, metrics, histogram_intersections, is_cost), method=learning_method,
             options={"disp": True})
-        best_weights = preprocessing.MinMaxScaler().fit_transform(result.x.reshape((-1, 1))).reshape((-1))
-        best_weights /= np.sum(best_weights)
+        best_weights = normalize_weights(result.x)
 
     return best_weights
 
