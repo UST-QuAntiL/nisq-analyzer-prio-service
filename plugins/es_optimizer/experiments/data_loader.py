@@ -1,3 +1,4 @@
+import math
 from typing import List, Tuple, Dict
 
 import numpy as np
@@ -90,8 +91,37 @@ def convert_weights_array_to_dict(weights: np.ndarray) -> Dict[str, float]:
     return weights_dict
 
 
-if __name__ == "__main__":
+def create_random_training_test_split(metrics: List[np.ndarray], histogram_intersections: List[np.ndarray], training_ratio: float) -> Tuple[List[np.ndarray], List[np.ndarray], List[np.ndarray], List[np.ndarray]]:
+    assert len(metrics) == len(histogram_intersections)
+    dataset_size = len(metrics)
+    training_set_size = math.floor(dataset_size * training_ratio)
+
+    rng = np.random.default_rng()
+    indices = np.arange(dataset_size)
+    rng.shuffle(indices)
+
+    training_metrics = []
+    training_histogram_intersections = []
+    test_metrics = []
+    test_histogram_intersections = []
+
+    for i in indices[0:training_set_size]:
+        training_metrics.append(metrics[i])
+        training_histogram_intersections.append(histogram_intersections[i])
+
+    for i in indices[training_set_size:]:
+        test_metrics.append(metrics[i])
+        test_histogram_intersections.append(histogram_intersections[i])
+
+    return training_metrics, training_histogram_intersections, test_metrics, test_histogram_intersections
+
+
+def main():
     data = load_csv_and_add_headers("Result_old.csv")
-    get_metrics_and_histogram_intersections(data)
     data = _filter_out_simulators(data)
-    test = 0
+    metrics, histogram_intersections = get_metrics_and_histogram_intersections(data)
+    create_random_training_test_split(metrics, histogram_intersections, 0.7)
+
+
+if __name__ == "__main__":
+    main()
