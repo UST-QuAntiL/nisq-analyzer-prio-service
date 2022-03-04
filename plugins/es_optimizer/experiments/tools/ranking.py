@@ -1,4 +1,6 @@
 import numpy as np
+from pymcdm.methods import TOPSIS
+from pymcdm.methods.mcda_method import MCDA_method
 
 
 def convert_scores_to_ranking(scores: np.ndarray, higher_scores_are_better: bool) -> np.ndarray:
@@ -12,7 +14,11 @@ def sort_array_with_ranking(array: np.ndarray, ranking: np.ndarray) -> np.ndarra
     return array[np.argsort(ranking)]
 
 
-def _test():
+def create_mcda_ranking(mcda: MCDA_method, metrics: np.ndarray, weights: np.ndarray, is_cost: np.ndarray) -> np.ndarray:
+    return convert_scores_to_ranking(mcda(metrics, weights, is_cost), True)
+
+
+def _test_conversion():
     test = np.array([3, 4, 5, 2])
     ranking = convert_scores_to_ranking(test, False)
     test_sorted = sort_array_with_ranking(test, ranking)
@@ -20,5 +26,17 @@ def _test():
     print(test_sorted)
 
 
+def _test_mcda_ranking():
+    mcda = TOPSIS()
+    metrics = np.array([
+        [5, 7],
+        [7, 5]
+    ])
+    weights = np.array([0.2, 0.8])
+    is_cost = np.array([1.0, -1.0])
+
+    print(create_mcda_ranking(mcda, metrics, weights, is_cost))
+
+
 if __name__ == "__main__":
-    _test()
+    _test_mcda_ranking()
