@@ -53,6 +53,14 @@ def calculate_average_spearman(mcda: MCDA_method, metrics: List[np.ndarray], his
     return average_spearman
 
 
+def calculate_standard_error(samples: List[float]) -> float:
+    """
+    :param samples: samples
+    :return: standard error of the mean of the samples
+    """
+    return np.std(samples) / np.sqrt(len(samples))
+
+
 def main():
     data = load_csv_and_add_headers("data/Result_old.csv")
     metrics, histogram_intersections = get_metrics_and_histogram_intersections(data)
@@ -80,10 +88,10 @@ def main():
 
     print("training mean: " + str(np.mean(training_spearman)))
     print("training std : " + str(np.std(training_spearman)))
-    print("training standard error of estimated mean: " + str(np.std(training_spearman) / np.sqrt(iteration_cnt)))
+    print("training standard error of estimated mean: " + str(calculate_standard_error(training_spearman)))
     print("test mean: " + str(np.mean(test_spearman)))
     print("test std : " + str(np.std(test_spearman)))
-    print("test standard error of estimated mean: " + str(np.std(test_spearman) / np.sqrt(iteration_cnt)))
+    print("test standard error of estimated mean: " + str(calculate_standard_error(test_spearman)))
 
 
 if __name__ == "__main__":
