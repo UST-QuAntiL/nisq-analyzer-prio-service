@@ -18,7 +18,7 @@ from qhana_plugin_runner.storage import STORE
 from qhana_plugin_runner.tasks import save_task_result, save_task_error
 
 from plugins.es_optimizer.api import PLUGIN_BLP, RankSensitivitySchema
-from plugins.es_optimizer.experiments.ranking import convert_scores_to_ranking
+from plugins.es_optimizer.experiments.tools.ranking import convert_scores_to_ranking
 from plugins.es_optimizer.parsing import get_metrics_from_compiled_circuits, parse_metric_info
 from plugins.es_optimizer.plugin import EsOptimizer
 
