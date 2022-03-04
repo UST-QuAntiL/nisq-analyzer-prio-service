@@ -51,6 +51,10 @@ def get_circuit_names(data: DataFrame) -> List[str]:
     return names
 
 
+def _filter_out_simulators(data: DataFrame) -> DataFrame:
+    return data[data["qpu"] != "ibmq_qasm_simulator"]
+
+
 def _filter_out_compilations_with_missing_data(data: DataFrame) -> DataFrame:
     data = data[data["result"].notna()]
     data = data[data["histogram_intersection"] > 0]
@@ -89,4 +93,5 @@ def convert_weights_array_to_dict(weights: np.ndarray) -> Dict[str, float]:
 if __name__ == "__main__":
     data = load_csv_and_add_headers("Result_old.csv")
     get_metrics_and_histogram_intersections(data)
-    # _filter_out_compilations_with_missing_data(data)
+    data = _filter_out_simulators(data)
+    test = 0
