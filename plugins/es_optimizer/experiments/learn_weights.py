@@ -1,3 +1,4 @@
+import json
 from pprint import pprint
 from typing import List
 
@@ -61,18 +62,20 @@ def calculate_standard_error(samples: List[float]) -> float:
     return np.std(samples) / np.sqrt(len(samples))
 
 
-def main():
+def main(mcda_method: MCDA_method, learning_method: str):
     data = load_csv_and_add_headers("data/Result_old.csv")
     metrics, histogram_intersections = get_metrics_and_histogram_intersections(data)
     training_spearman = []
     test_spearman = []
     iteration_cnt = 100
+    weights_list = []
 
     for _ in range(iteration_cnt):
         training_metrics, training_histogram_intersections, test_metrics, test_histogram_intersections = \
             create_random_training_test_split(metrics, histogram_intersections, 0.7)
         weights = learn_best_weights(
-            learning_methods[0], mcda_methods[0], training_metrics, training_histogram_intersections, is_cost)
+            learning_method, mcda_method, training_metrics, training_histogram_intersections, is_cost)
+        weights_list.append(weights.tolist())
 
         # weights_dict = convert_weights_array_to_dict(weights)
         # pprint(weights_dict)
@@ -80,19 +83,40 @@ def main():
         # print(create_mcda_ranking(mcda_methods[0], training_metrics[0], weights, is_cost))
         # print(convert_scores_to_ranking(training_histogram_intersections[0], True))
 
-        training_spearman.append(calculate_average_spearman(mcda_methods[0], training_metrics, training_histogram_intersections, weights))
-        test_spearman.append(calculate_average_spearman(mcda_methods[0], test_metrics, test_histogram_intersections, weights))
+        training_spearman.append(calculate_average_spearman(mcda_method, training_metrics, training_histogram_intersections, weights))
+        test_spearman.append(calculate_average_spearman(mcda_method, test_metrics, test_histogram_intersections, weights))
         print(training_spearman[-1])
         print(test_spearman[-1])
         print()
 
-    print("training mean: " + str(np.mean(training_spearman)))
-    print("training std : " + str(np.std(training_spearman)))
-    print("training standard error of estimated mean: " + str(calculate_standard_error(training_spearman)))
-    print("test mean: " + str(np.mean(test_spearman)))
-    print("test std : " + str(np.std(test_spearman)))
-    print("test standard error of estimated mean: " + str(calculate_standard_error(test_spearman)))
+    training_mean = np.mean(training_spearman)
+    training_std = np.std(training_spearman)
+    training_se = calculate_standard_error(training_spearman)
+    test_mean = np.mean(test_spearman)
+    test_std = np.std(test_spearman)
+    test_se = calculate_standard_error(test_spearman)
+
+    print("training mean: " + str(training_mean))
+    print("training std : " + str(training_std))
+    print("training standard error of estimated mean: " + str(training_se))
+    print("test mean: " + str(test_mean))
+    print("test std : " + str(test_std))
+    print("test standard error of estimated mean: " + str(test_se))
+
+    result = {
+        "training_mean": training_mean,
+        "training_std": training_std,
+        "training_se": training_se,
+        "test_mean": test_mean,
+        "test_std": test_std,
+        "test_se": test_se,
+        "weights": weights_list
+    }
+
+    json.dump(result, open(mcda_method.__class__.__name__ + "_" + learning_method + ".json", mode="wt"))
 
 
 if __name__ == "__main__":
-    main()
+    for mcda_method in mcda_methods:
+        for learning_method in learning_methods[1:2]:
+            main(mcda_method, learning_method)
