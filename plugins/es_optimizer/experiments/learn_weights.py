@@ -1,4 +1,5 @@
 import json
+from multiprocessing import Pool
 from pprint import pprint
 from typing import List
 
@@ -62,32 +63,36 @@ def calculate_standard_error(samples: List[float]) -> float:
     return np.std(samples) / np.sqrt(len(samples))
 
 
+def execute_training(metrics: List[np.ndarray], histogram_intersections: List[np.ndarray], mcda_method: MCDA_method, learning_method: str):
+    training_metrics, training_histogram_intersections, test_metrics, test_histogram_intersections = \
+        create_random_training_test_split(metrics, histogram_intersections, 0.7)
+    weights = learn_best_weights(
+        learning_method, mcda_method, training_metrics, training_histogram_intersections, is_cost)
+
+    # weights_dict = convert_weights_array_to_dict(weights)
+    # pprint(weights_dict)
+
+    # print(create_mcda_ranking(mcda_methods[0], training_metrics[0], weights, is_cost))
+    # print(convert_scores_to_ranking(training_histogram_intersections[0], True))
+
+    new_training_spearman = \
+        calculate_average_spearman(mcda_method, training_metrics, training_histogram_intersections, weights)
+    new_test_spearman = \
+        calculate_average_spearman(mcda_method, test_metrics, test_histogram_intersections, weights)
+    print(new_training_spearman)
+    print(new_test_spearman)
+    print()
+
+    return new_training_spearman, new_test_spearman, weights.tolist()
+
+
 def main(mcda_method: MCDA_method, learning_method: str):
     data = load_csv_and_add_headers("data/Result_old.csv")
     metrics, histogram_intersections = get_metrics_and_histogram_intersections(data)
-    training_spearman = []
-    test_spearman = []
     iteration_cnt = 100
-    weights_list = []
 
-    for _ in range(iteration_cnt):
-        training_metrics, training_histogram_intersections, test_metrics, test_histogram_intersections = \
-            create_random_training_test_split(metrics, histogram_intersections, 0.7)
-        weights = learn_best_weights(
-            learning_method, mcda_method, training_metrics, training_histogram_intersections, is_cost)
-        weights_list.append(weights.tolist())
-
-        # weights_dict = convert_weights_array_to_dict(weights)
-        # pprint(weights_dict)
-
-        # print(create_mcda_ranking(mcda_methods[0], training_metrics[0], weights, is_cost))
-        # print(convert_scores_to_ranking(training_histogram_intersections[0], True))
-
-        training_spearman.append(calculate_average_spearman(mcda_method, training_metrics, training_histogram_intersections, weights))
-        test_spearman.append(calculate_average_spearman(mcda_method, test_metrics, test_histogram_intersections, weights))
-        print(training_spearman[-1])
-        print(test_spearman[-1])
-        print()
+    with Pool(8) as p:
+        training_spearman, test_spearman, weights_list = zip(*p.starmap(execute_training, [(metrics, histogram_intersections, mcda_method, learning_method)] * iteration_cnt))
 
     training_mean = np.mean(training_spearman)
     training_std = np.std(training_spearman)
@@ -116,7 +121,11 @@ def main(mcda_method: MCDA_method, learning_method: str):
     json.dump(result, open(mcda_method.__class__.__name__ + "_" + learning_method + ".json", mode="wt"))
 
 
-if __name__ == "__main__":
+def train_all_variations():
     for mcda_method in mcda_methods:
-        for learning_method in learning_methods[1:2]:
+        for learning_method in learning_methods:
             main(mcda_method, learning_method)
+
+
+if __name__ == "__main__":
+    train_all_variations()
