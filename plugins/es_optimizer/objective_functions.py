@@ -16,14 +16,14 @@ def objective_function(mcda: MCDA_method, metrics: np.ndarray, histogram_interse
     scores = mcda(metrics, weights, is_cost)
 
     # normalization
-    target_scores -= np.min(target_scores)
-    target_scores /= np.max(target_scores)
+    normalized_target_scores = target_scores - np.min(target_scores)
+    normalized_target_scores /= np.max(normalized_target_scores)
 
-    scores -= np.min(scores)
-    scores /= np.max(scores)
+    normalized_scores = scores - np.min(scores)
+    normalized_scores /= np.max(normalized_scores)
 
     # mean square error
-    loss = np.mean((target_scores - scores) * (target_scores - scores))
+    loss = np.mean((normalized_target_scores - normalized_scores) * (normalized_target_scores - normalized_scores))
 
     return loss.item()
 
