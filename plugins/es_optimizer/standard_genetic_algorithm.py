@@ -11,8 +11,10 @@ from plugins.es_optimizer.preprocessing import normalize_weights
 
 
 def roulette_wheel_selection(weights: np.ndarray, fitness: np.ndarray, rng: np.random.Generator) -> np.ndarray:
-    zero_min_fitness = fitness - np.min(fitness)
-    probability = zero_min_fitness / np.sum(zero_min_fitness)
+    zero_min_fitness = fitness - np.nanmin(fitness)
+    probability: np.ndarray = zero_min_fitness / np.nansum(zero_min_fitness)
+
+    probability[np.isnan(probability)] = 0
 
     return rng.choice(weights, size=1, p=probability).reshape((-1))
 
