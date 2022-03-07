@@ -1,8 +1,12 @@
 import numpy as np
-from sklearn.preprocessing import MinMaxScaler
+
+
+def _logistic_function(values: np.ndarray, maximum_value: float, steepness: float, midpoint: float) -> np.ndarray:
+    return maximum_value / (1 + np.exp(-steepness * (values - midpoint)))
 
 
 def normalize_weights(weights: np.ndarray) -> np.ndarray:
-    normalized_weights = MinMaxScaler().fit_transform(weights.reshape((-1, 1))).reshape((-1))
+    weights_max_one = weights / np.max(weights)
+    weights_sum_one = weights_max_one / np.sum(weights_max_one)
 
-    return normalized_weights / np.sum(normalized_weights)
+    return weights_sum_one
