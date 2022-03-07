@@ -10,6 +10,7 @@ from scipy.optimize import minimize
 
 from plugins.es_optimizer import rank_correlation
 from plugins.es_optimizer.evolutionary_strategy import evolutionary_strategy
+from plugins.es_optimizer.experiments.tools import data_loader
 from plugins.es_optimizer.experiments.tools.data_loader import load_csv_and_add_headers, \
     get_metrics_and_histogram_intersections, convert_weights_array_to_dict, is_cost, create_random_training_test_split
 from plugins.es_optimizer.experiments.tools.ranking import create_mcda_ranking, convert_scores_to_ranking
@@ -115,6 +116,7 @@ def main(mcda_method: MCDA_method, learning_method: str):
         "test_mean": test_mean,
         "test_std": test_std,
         "test_se": test_se,
+        "metric_names": data_loader.metric_column_names,
         "weights": weights_list
     }
 
