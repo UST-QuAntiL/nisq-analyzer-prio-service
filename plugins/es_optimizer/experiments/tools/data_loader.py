@@ -66,16 +66,20 @@ def _filter_out_compilations_with_missing_data(data: DataFrame) -> DataFrame:
 
 def get_metrics_and_histogram_intersections(data: DataFrame) -> Tuple[List[np.ndarray], List[np.ndarray]]:
     data = _filter_out_compilations_with_missing_data(data)
+    data = _filter_out_simulators(data)
 
     circuit_names = get_circuit_names(data)
     metrics = []
     histogram_intersections = []
 
     for circuit_name in circuit_names:
-        single_circuit = data[data["circuit_name"] == circuit_name]
-        single_circuit_metrics = single_circuit[metric_column_names]
-        metrics.append(single_circuit_metrics.to_numpy(dtype=float))
-        histogram_intersections.append(single_circuit["histogram_intersection"].to_numpy(dtype=float))
+        single_circuit: DataFrame = data[data["circuit_name"] == circuit_name]
+        contains_more_than_one_compilation = len(single_circuit) > 1
+
+        if contains_more_than_one_compilation:
+            single_circuit_metrics = single_circuit[metric_column_names]
+            metrics.append(single_circuit_metrics.to_numpy(dtype=float))
+            histogram_intersections.append(single_circuit["histogram_intersection"].to_numpy(dtype=float))
 
     return metrics, histogram_intersections
 
