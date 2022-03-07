@@ -64,8 +64,6 @@ def _filter_out_compilations_with_missing_data(data: DataFrame) -> DataFrame:
     return data
 
 
-# TODO: add training / test set split
-# TODO: add cross validation
 def get_metrics_and_histogram_intersections(data: DataFrame) -> Tuple[List[np.ndarray], List[np.ndarray]]:
     data = _filter_out_compilations_with_missing_data(data)
 
