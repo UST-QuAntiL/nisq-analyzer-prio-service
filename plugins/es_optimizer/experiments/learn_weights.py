@@ -117,7 +117,9 @@ def main(mcda_method: MCDA_method, learning_method: str):
         "test_std": test_std,
         "test_se": test_se,
         "metric_names": data_loader.metric_column_names,
-        "normalized_weights": normalized_weights_list
+        "normalized_weights": normalized_weights_list,
+        "weights_mean": np.mean(np.array(normalized_weights_list)).tolist(),
+        "weights_std": np.std(np.array(normalized_weights_list)).tolist()
     }
 
     json.dump(result, open(mcda_method.__class__.__name__ + "_" + learning_method + ".json", mode="wt"))
