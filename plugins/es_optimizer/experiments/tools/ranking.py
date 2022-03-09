@@ -2,6 +2,8 @@ import numpy as np
 from pymcdm.methods import TOPSIS
 from pymcdm.methods.mcda_method import MCDA_method
 
+from plugins.es_optimizer.weights import NormalizedWeights
+
 
 def convert_scores_to_ranking(scores: np.ndarray, higher_scores_are_better: bool) -> np.ndarray:
     if higher_scores_are_better:
@@ -14,8 +16,8 @@ def sort_array_with_ranking(array: np.ndarray, ranking: np.ndarray) -> np.ndarra
     return array[np.argsort(ranking)]
 
 
-def create_mcda_ranking(mcda: MCDA_method, metrics: np.ndarray, weights: np.ndarray, is_cost: np.ndarray) -> np.ndarray:
-    return convert_scores_to_ranking(mcda(metrics, weights, is_cost), True)
+def create_mcda_ranking(mcda: MCDA_method, metrics: np.ndarray, weights: NormalizedWeights, is_cost: np.ndarray) -> np.ndarray:
+    return convert_scores_to_ranking(mcda(metrics, weights.normalized_weights, is_cost), True)
 
 
 def _test_conversion():
@@ -35,7 +37,7 @@ def _test_mcda_ranking():
     weights = np.array([0.2, 0.8])
     is_cost = np.array([1.0, -1.0])
 
-    print(create_mcda_ranking(mcda, metrics, weights, is_cost))
+    print(create_mcda_ranking(mcda, metrics, NormalizedWeights(weights), is_cost))
 
 
 if __name__ == "__main__":

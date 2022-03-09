@@ -17,7 +17,6 @@ from qhana_plugin_runner.db.models.tasks import ProcessingTask
 from qhana_plugin_runner.storage import STORE
 from qhana_plugin_runner.tasks import save_task_result, save_task_error
 from scipy.optimize import minimize
-from sklearn import preprocessing
 
 from plugins.es_optimizer.api import PLUGIN_BLP, LearnRankingSchema
 from plugins.es_optimizer.evolutionary_strategy import evolutionary_strategy
@@ -25,8 +24,8 @@ from plugins.es_optimizer.objective_functions import objective_function_all_circ
 from plugins.es_optimizer.parsing import get_metrics_from_compiled_circuits, \
     get_histogram_intersections_from_compiled_circuits, parse_metric_info
 from plugins.es_optimizer.plugin import EsOptimizer
-from plugins.es_optimizer.preprocessing import normalize_weights
 from plugins.es_optimizer.standard_genetic_algorithm import standard_genetic_algorithm
+from plugins.es_optimizer.weights import Weights
 
 
 @PLUGIN_BLP.route("/learn-ranking")
@@ -112,14 +111,14 @@ def learn_ranking_task(self, db_id: int) -> str:
         result = minimize(
             objective_function_all_circuits, np.random.random(weights.shape), (mcda, metrics, histogram_intersections, is_cost), method=task_parameters["learning_method"],
             options={"disp": True})
-        best_weights = normalize_weights(result.x)
+        best_weights = Weights.normalize(result.x)
 
     with SpooledTemporaryFile(mode="wt") as output_file:
         metric_weights = {}
 
-        for name, ic, weight in zip(metric_names, is_cost, best_weights):
+        for name, ic, weight in zip(metric_names, is_cost, best_weights.normalized_weights):
             metric_weights[name] = {
-                "weight": weight,
+                "normalized_weight": weight,
                 "isCost": True if ic == -1.0 else False
             }
 
