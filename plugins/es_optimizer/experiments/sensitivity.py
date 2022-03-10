@@ -1,4 +1,5 @@
 import json
+from multiprocessing import Pool
 from typing import List, Tuple
 
 import numpy as np
@@ -53,7 +54,13 @@ def find_changing_factors(metrics: List[np.ndarray], original_weights: Normalize
 
         return changing_factors
 
-    return find_factors(0.99), find_factors(1.01)
+    decreasing_factors = find_factors(0.99)
+    increasing_factors = find_factors(1.01)
+
+    print(decreasing_factors)
+    print(increasing_factors)
+
+    return decreasing_factors, increasing_factors
 
 
 def main():
@@ -61,8 +68,16 @@ def main():
     metrics, histogram_intersections = get_metrics_and_histogram_intersections(data)
     file_name = "TOPSIS_es.json"
     learned_weights_result = json.load(open("results/Result_15-normalized_weights/" + file_name))
-    changing_factors_decrease = []
-    changing_factors_increase = []
+    original_weights = [NormalizedWeights(np.array(weights)) for weights in learned_weights_result["normalized_weights"]]
+
+    with Pool(8) as p:
+        changing_factors_decrease, changing_factors_increase = zip(*p.starmap(
+            find_changing_factors,
+            zip(
+                [metrics] * len(original_weights),
+                original_weights
+            )
+        ))
 
     for weights in learned_weights_result["normalized_weights"]:
         original_weights = NormalizedWeights(np.array(weights))
@@ -70,9 +85,6 @@ def main():
         changing_factors_decrease.append(dec)
         changing_factors_increase.append(inc)
 
-        print(changing_factors_decrease[-1])
-        print(changing_factors_increase[-1])
-        print()
 
     json.dump({
         "changing_factors_decrease": changing_factors_decrease,
