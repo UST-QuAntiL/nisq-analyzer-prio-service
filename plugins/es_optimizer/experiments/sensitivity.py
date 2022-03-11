@@ -66,7 +66,7 @@ def find_changing_factors(mcda: MCDA_method, metrics: List[np.ndarray], original
 def main():
     data = load_csv_and_add_headers("data/Result_15.csv")
     metrics, histogram_intersections = get_metrics_and_histogram_intersections(data)
-    file_name = "PROMETHEE_II_es.json"
+    file_name = "PROMETHEE_II_ga.json"
     mcda = None
 
     if "topsis" in file_name.lower():
@@ -89,7 +89,16 @@ def main():
 
     json.dump({
         "changing_factors_decrease": changing_factors_decrease,
-        "changing_factors_increase": changing_factors_increase
+        "changing_factors_decrease_mean": np.nanmean(changing_factors_decrease),
+        "changing_factors_decrease_std": np.nanstd(changing_factors_decrease),
+        "changing_factors_decrease_se": np.nanstd(changing_factors_decrease) / np.sqrt(len(changing_factors_decrease)),
+        "changing_factors_decrease_nan_ratio": np.mean(np.isnan(changing_factors_decrease)),
+
+        "changing_factors_increase": changing_factors_increase,
+        "changing_factors_increase_mean": np.nanmean(changing_factors_increase),
+        "changing_factors_increase_std": np.nanstd(changing_factors_increase),
+        "changing_factors_increase_se": np.nanstd(changing_factors_increase) / np.sqrt(len(changing_factors_increase)),
+        "changing_factors_increase_nan_ratio": np.mean(np.isnan(changing_factors_increase)),
     }, open("results/Result_15-normalized_weights/sensitivity/" + file_name, mode="wt"))
 
 
