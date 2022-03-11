@@ -3,7 +3,7 @@ from multiprocessing import Pool
 from typing import List, Tuple
 
 import numpy as np
-from pymcdm.methods import TOPSIS
+from pymcdm.methods import TOPSIS, PROMETHEE_II
 from pymcdm.methods.mcda_method import MCDA_method
 
 from plugins.es_optimizer import rank_correlation
@@ -28,7 +28,7 @@ def calculate_average_spearman(mcda: MCDA_method, metrics: List[np.ndarray], ori
     return average_spearman
 
 
-def find_changing_factors(metrics: List[np.ndarray], original_weights: NormalizedWeights) -> Tuple[List[float], List[float]]:
+def find_changing_factors(mcda: MCDA_method, metrics: List[np.ndarray], original_weights: NormalizedWeights) -> Tuple[List[float], List[float]]:
     def find_factors(factor_adjustment: float) -> List[float]:
         changing_factors = []
 
@@ -42,7 +42,7 @@ def find_changing_factors(metrics: List[np.ndarray], original_weights: Normalize
                 disturbed_weights /= np.sum(disturbed_weights)
 
                 avg_spearman = calculate_average_spearman(
-                    TOPSIS(), metrics, original_weights, NormalizedWeights(disturbed_weights))
+                    mcda, metrics, original_weights, NormalizedWeights(disturbed_weights))
 
                 if avg_spearman < 0.99999:
                     changing_factor = factor
@@ -66,7 +66,14 @@ def find_changing_factors(metrics: List[np.ndarray], original_weights: Normalize
 def main():
     data = load_csv_and_add_headers("data/Result_15.csv")
     metrics, histogram_intersections = get_metrics_and_histogram_intersections(data)
-    file_name = "TOPSIS_es.json"
+    file_name = "PROMETHEE_II_es.json"
+    mcda = None
+
+    if "topsis" in file_name.lower():
+        mcda = TOPSIS()
+    elif "promethee" in file_name.lower():
+        mcda = PROMETHEE_II("usual")
+
     learned_weights_result = json.load(open("results/Result_15-normalized_weights/" + file_name))
     original_weights = [NormalizedWeights(np.array(weights)) for weights in learned_weights_result["normalized_weights"]]
 
@@ -74,17 +81,11 @@ def main():
         changing_factors_decrease, changing_factors_increase = zip(*p.starmap(
             find_changing_factors,
             zip(
+                [mcda] * len(original_weights),
                 [metrics] * len(original_weights),
                 original_weights
             )
         ))
-
-    for weights in learned_weights_result["normalized_weights"]:
-        original_weights = NormalizedWeights(np.array(weights))
-        dec, inc = find_changing_factors(metrics, original_weights)
-        changing_factors_decrease.append(dec)
-        changing_factors_increase.append(inc)
-
 
     json.dump({
         "changing_factors_decrease": changing_factors_decrease,
