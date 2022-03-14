@@ -88,7 +88,7 @@ def execute_training(metrics: List[np.ndarray], histogram_intersections: List[np
 
 
 def main(mcda_method: MCDA_method, learning_method: str):
-    data = load_csv_and_add_headers("data/Result_15.csv")
+    data = load_csv_and_add_headers("data/Result_25.csv")
     metrics, histogram_intersections = get_metrics_and_histogram_intersections(data)
     iteration_cnt = 100
 
@@ -118,8 +118,8 @@ def main(mcda_method: MCDA_method, learning_method: str):
         "test_se": test_se,
         "metric_names": data_loader.metric_column_names,
         "normalized_weights": normalized_weights_list,
-        "weights_mean": np.mean(np.array(normalized_weights_list)).tolist(),
-        "weights_std": np.std(np.array(normalized_weights_list)).tolist()
+        "weights_mean": np.mean(np.array(normalized_weights_list), axis=0).tolist(),
+        "weights_std": np.std(np.array(normalized_weights_list), axis=0).tolist()
     }
 
     json.dump(result, open(mcda_method.__class__.__name__ + "_" + learning_method + ".json", mode="wt"))
