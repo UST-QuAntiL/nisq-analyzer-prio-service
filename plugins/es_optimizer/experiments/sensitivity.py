@@ -1,4 +1,5 @@
 import json
+import os
 from multiprocessing import Pool
 from typing import List, Tuple
 
@@ -63,18 +64,18 @@ def find_changing_factors(mcda: MCDA_method, metrics: List[np.ndarray], original
     return decreasing_factors, increasing_factors
 
 
-def main():
-    data = load_csv_and_add_headers("data/Result_15.csv")
+def main(dataset_path: str, learned_weights_path: str):
+    data = load_csv_and_add_headers(dataset_path)
     metrics, histogram_intersections = get_metrics_and_histogram_intersections(data)
-    file_name = "PROMETHEE_II_COBYLA.json"
     mcda = None
+    learned_weights_file_name = os.path.basename(learned_weights_path)
 
-    if "topsis" in file_name.lower():
+    if "topsis" in learned_weights_file_name.lower():
         mcda = TOPSIS()
-    elif "promethee" in file_name.lower():
+    elif "promethee" in learned_weights_file_name.lower():
         mcda = PROMETHEE_II("usual")
 
-    learned_weights_result = json.load(open("results/Result_15-normalized_weights/" + file_name))
+    learned_weights_result = json.load(open(learned_weights_path))
     original_weights = [NormalizedWeights(np.array(weights)) for weights in learned_weights_result["normalized_weights"]]
 
     with Pool(8) as p:
@@ -99,8 +100,8 @@ def main():
         "changing_factors_increase_std": np.nanstd(changing_factors_increase, axis=0).tolist(),
         "changing_factors_increase_se": (np.nanstd(changing_factors_increase, axis=0) / np.sqrt(len(changing_factors_increase))).tolist(),
         "changing_factors_increase_nan_ratio": np.mean(np.isnan(changing_factors_increase), axis=0).tolist(),
-    }, open("results/Result_15-normalized_weights/sensitivity/" + file_name, mode="wt"))
+    }, open(os.path.join(os.path.dirname(learned_weights_path), "sensitivity_" + learned_weights_file_name), mode="wt"))
 
 
 if __name__ == "__main__":
-    main()
+    main("data/Result_25.csv", "results/Result_25/TOPSIS_es.json")

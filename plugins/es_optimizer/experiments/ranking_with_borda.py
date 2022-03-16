@@ -42,7 +42,7 @@ def main():
     data = load_csv_and_add_headers("data/Result_25.csv")
     circ_name = "shor-fix-15-qiskit"
     sc_data = SingleCircuitData(data, circ_name)
-    weights_mean = load_weights_mean("results/Result_15-normalized_weights/TOPSIS_ga.json")
+    weights_mean = load_weights_mean("results/Result_25/TOPSIS_COBYLA.json")
 
     histo_rank = sc_data.rank_histogram_intersections()
     mcda_rank = sc_data.rank_with_mcda(TOPSIS(), NormalizedWeights(weights_mean), is_cost)
