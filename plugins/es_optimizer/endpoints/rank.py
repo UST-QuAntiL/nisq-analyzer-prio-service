@@ -87,13 +87,14 @@ def rank_task(self, db_id: int) -> str:
 
     compiled_circuits = task_parameters["circuits"][0]["compiled_circuits"]
     metrics = get_metrics_from_compiled_circuits(compiled_circuits, metric_names)
+    mcda_method_name = task_parameters["mcda_method"]
 
-    if task_parameters["method"] == "topsis":
-        scores = TOPSIS()(metrics, weights, is_cost)
-    elif task_parameters["method"] == "promethee_ii":
-        scores = PROMETHEE_II("usual")(metrics, weights, is_cost)
+    if mcda_method_name == "topsis":
+        scores = TOPSIS()(metrics, weights.normalized_weights, is_cost)
+    elif mcda_method_name == "promethee_ii":
+        scores = PROMETHEE_II("usual")(metrics, weights.normalized_weights, is_cost)
     else:
-        raise ValueError("Unknown method: " + str(task_parameters["method"]))
+        raise ValueError("Unknown method: " + mcda_method_name)
 
     output_data = {
         "scores": {},
