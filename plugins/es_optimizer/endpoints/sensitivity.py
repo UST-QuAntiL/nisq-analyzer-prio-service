@@ -18,9 +18,11 @@ from qhana_plugin_runner.storage import STORE
 from qhana_plugin_runner.tasks import save_task_result, save_task_error
 
 from plugins.es_optimizer.api import PLUGIN_BLP, RankSensitivitySchema
-from plugins.es_optimizer.experiments.tools.ranking import convert_scores_to_ranking
 from plugins.es_optimizer.parsing import get_metrics_from_compiled_circuits, parse_metric_info
 from plugins.es_optimizer.plugin import EsOptimizer
+from plugins.es_optimizer.sensitivity import find_changing_factors
+from plugins.es_optimizer.tools.ranking import convert_scores_to_ranking
+from plugins.es_optimizer.weights import NormalizedWeights
 
 
 @PLUGIN_BLP.route("/rank-sensitivity")
@@ -94,35 +96,20 @@ def rank_sensitivity_task(self, db_id: int) -> str:
         raise ValueError("Unknown method: " + str(task_parameters["method"]))
 
     original_ranking = convert_scores_to_ranking(mcda(metrics, weights, is_cost), True)
-    unitary_variation_ratios = task_parameters["unitary_variation_ratios"]
+    step_size: float = task_parameters["step_size"]
+    upper_bound: float = task_parameters["upper_bound"]
+    lower_bound: float = task_parameters["lower_bound"]
 
     output_data = {
-        "results": [],
         "original_ranking": original_ranking.tolist()
     }
 
-    for i in range(len(unitary_variation_ratios)):
-        current_uni_vari = unitary_variation_ratios[i]
+    decreasing_factors, decreasing_ranks, increasing_factors, increasing_ranks = find_changing_factors(mcda, [metrics], NormalizedWeights(weights), step_size, upper_bound, lower_bound)
 
-        new_result = {
-            "unitary_variation_ratio": current_uni_vari,
-            "disturbed_weights": [],
-            "disturbed_rankings": []
-        }
-
-        for j in range(len(weights)):
-            current_weight = weights[j]
-            initial_variation_ratio = (current_uni_vari - current_uni_vari * current_weight) / (1 - current_uni_vari * current_weight)
-
-            disturbed_weights = weights.copy()
-            disturbed_weights[j] *= initial_variation_ratio
-            disturbed_weights /= np.sum(disturbed_weights)
-            new_result["disturbed_weights"].append(disturbed_weights.tolist())
-
-            disturbed_ranking = convert_scores_to_ranking(mcda(metrics, disturbed_weights, is_cost), True)
-            new_result["disturbed_rankings"].append(disturbed_ranking.tolist())
-
-        output_data["results"].append(new_result)
+    output_data["decreasing_factors"] = decreasing_factors
+    output_data["disturbed_ranks_decreased"] = decreasing_ranks
+    output_data["increasing_factors"] = increasing_factors
+    output_data["disturbed_ranks_increased"] = increasing_ranks
 
     with SpooledTemporaryFile(mode="wt") as output_file:
         json.dump(output_data, output_file)

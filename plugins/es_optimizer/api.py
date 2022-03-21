@@ -102,6 +102,18 @@ class RankSensitivitySchema(FrontendFormBaseSchema):
         required=True,
         allow_none=False
     )
+    step_size = ma.fields.Float(
+        required=True,
+        allow_none=False
+    )
+    upper_bound = ma.fields.Float(
+        required=True,
+        allow_none=False
+    )
+    lower_bound = ma.fields.Float(
+        required=True,
+        allow_none=False
+    )
     metrics = ma.fields.Dict(
         keys=ma.fields.String(),
         values=ma.fields.Nested(
@@ -112,11 +124,6 @@ class RankSensitivitySchema(FrontendFormBaseSchema):
     )
     circuits = ma.fields.List(
         ma.fields.Nested(CircuitSchema),
-        required=True,
-        allow_none=False
-    )
-    unitary_variation_ratios = ma.fields.List(
-        ma.fields.Float(),
         required=True,
         allow_none=False
     )
