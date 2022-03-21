@@ -1,9 +1,10 @@
 import json
+import math
 from datetime import datetime
 from http import HTTPStatus
 from json import dumps, loads
 from tempfile import SpooledTemporaryFile
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, List
 
 import numpy as np
 from celery import chain
@@ -66,6 +67,18 @@ class ProcessView(MethodView):
 TASK_LOGGER = get_task_logger(__name__)
 
 
+def replace_nan_with_none(float_list: List[float]) -> List[float]:
+    new_list = []
+
+    for f in float_list:
+        if math.isnan(f):
+            new_list.append(None)
+        else:
+            new_list.append(f)
+
+    return new_list
+
+
 # task names must be globally unique => use full versioned plugin identifier to scope name
 @CELERY.task(name=f"{EsOptimizer.instance.identifier}.rank_sensitivity_task", bind=True)
 def rank_sensitivity_task(self, db_id: int) -> str:
@@ -106,9 +119,9 @@ def rank_sensitivity_task(self, db_id: int) -> str:
 
     decreasing_factors, decreasing_ranks, increasing_factors, increasing_ranks = find_changing_factors(mcda, [metrics], NormalizedWeights(weights), step_size, upper_bound, lower_bound)
 
-    output_data["decreasing_factors"] = decreasing_factors
+    output_data["decreasing_factors"] = replace_nan_with_none(decreasing_factors)
     output_data["disturbed_ranks_decreased"] = decreasing_ranks
-    output_data["increasing_factors"] = increasing_factors
+    output_data["increasing_factors"] = replace_nan_with_none(increasing_factors)
     output_data["disturbed_ranks_increased"] = increasing_ranks
 
     with SpooledTemporaryFile(mode="wt") as output_file:
