@@ -12,11 +12,14 @@ from celery.utils.log import get_task_logger
 from flask import redirect, url_for
 from flask.views import MethodView
 from marshmallow import EXCLUDE
+from plotly.subplots import make_subplots
 from pymcdm.methods import TOPSIS, PROMETHEE_II
 from qhana_plugin_runner.celery import CELERY
 from qhana_plugin_runner.db.models.tasks import ProcessingTask
 from qhana_plugin_runner.storage import STORE
 from qhana_plugin_runner.tasks import save_task_result, save_task_error
+import plotly.express as px
+import plotly.graph_objects as go
 
 from plugins.es_optimizer.api import PLUGIN_BLP, RankSensitivitySchema
 from plugins.es_optimizer.parsing import get_metrics_from_compiled_circuits, parse_metric_info
@@ -124,10 +127,28 @@ def rank_sensitivity_task(self, db_id: int) -> str:
     output_data["increasing_factors"] = replace_nan_with_none(increasing_factors)
     output_data["disturbed_ranks_increased"] = increasing_ranks
 
+    fig = make_subplots(rows=2, cols=1, shared_xaxes=True, vertical_spacing=0.05)
+    fig.update_yaxes({"range": [0.9, np.nanmax(increasing_factors) * 1.1]}, row=1)
+    fig.update_yaxes({"range": [0, 1.1]}, row=2)
+    fig.add_trace(
+        go.Scatter(x=metric_names, y=increasing_factors, name="increasing factors", mode="markers", marker={"symbol": "triangle-up", "size": 10}),
+        row=1, col=1
+    )
+    fig.add_trace(
+        go.Scatter(x=metric_names, y=decreasing_factors, name="decreasing factors", mode="markers", marker={"symbol": "triangle-up", "size": 10}),
+        row=2, col=1
+    )
+
     with SpooledTemporaryFile(mode="wt") as output_file:
         json.dump(output_data, output_file)
         STORE.persist_task_result(
             db_id, output_file, "sensitivity.json", "text", "application/json"
+        )
+
+    with SpooledTemporaryFile(mode="wt") as output_file:
+        fig.write_html(output_file)
+        STORE.persist_task_result(
+            db_id, output_file, "plot.html", "plot", "text/html"
         )
 
     return "finished"
