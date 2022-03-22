@@ -39,6 +39,13 @@ class MetricSchema(FrontendFormBaseSchema):
     )
 
 
+class BordaCountSchema(FrontendFormBaseSchema):
+    is_cost = ma.fields.Bool(
+        required=True,
+        allow_none=False
+    )
+
+
 class CircuitSchema(FrontendFormBaseSchema):
     id = ma.fields.String(
         required=True,
@@ -58,13 +65,21 @@ class RankSchema(FrontendFormBaseSchema):
         required=True,
         allow_none=False
     )
-    metrics = ma.fields.Dict(
+    metric_weights = ma.fields.Dict(
         keys=ma.fields.String(),
         values=ma.fields.Nested(
             MetricSchema
         ),
         required=True,
         allow_none=False,
+    )
+    borda_count_metrics = ma.fields.Dict(
+        keys=ma.fields.String(),
+        values=ma.fields.Nested(
+            BordaCountSchema
+        ),
+        required=True,
+        allow_none=False
     )
     circuits = ma.fields.List(
         ma.fields.Nested(CircuitSchema),
@@ -82,7 +97,7 @@ class LearnRankingSchema(FrontendFormBaseSchema):
         required=True,
         allow_none=False
     )
-    metrics = ma.fields.Dict(
+    metric_weights = ma.fields.Dict(
         keys=ma.fields.String(),
         values=ma.fields.Nested(
             MetricSchema
@@ -114,7 +129,7 @@ class RankSensitivitySchema(FrontendFormBaseSchema):
         required=True,
         allow_none=False
     )
-    metrics = ma.fields.Dict(
+    metric_weights = ma.fields.Dict(
         keys=ma.fields.String(),
         values=ma.fields.Nested(
             MetricSchema

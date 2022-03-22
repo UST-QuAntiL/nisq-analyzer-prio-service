@@ -41,4 +41,8 @@ def _test_mcda_ranking():
 
 
 if __name__ == "__main__":
-    _test_mcda_ranking()
+    # _test_mcda_ranking()
+    original_ranking = np.array([1, 0, 3, 2])
+    disturbed_ranking = np.array([3, 0, 1, 2])
+
+    print(sort_array_with_ranking(disturbed_ranking, original_ranking))

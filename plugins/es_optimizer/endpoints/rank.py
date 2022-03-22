@@ -21,6 +21,7 @@ from sklearn import preprocessing
 from plugins.es_optimizer.api import PLUGIN_BLP, RankSchema
 from plugins.es_optimizer.parsing import get_metrics_from_compiled_circuits, parse_metric_info
 from plugins.es_optimizer.plugin import EsOptimizer
+from plugins.es_optimizer.tools.ranking import convert_scores_to_ranking, sort_array_with_ranking
 from plugins.es_optimizer.weights import NormalizedWeights
 
 
@@ -105,8 +106,8 @@ def rank_task(self, db_id: int) -> str:
     for compiled_circuit_id, score in zip(compiled_circuit_ids, scores):
         output_data["scores"][compiled_circuit_id] = score
 
-    sorted_indices = np.argsort(-scores)
-    sorted_ids = np.array(compiled_circuit_ids)[sorted_indices]
+    ranking = convert_scores_to_ranking(scores, True)
+    sorted_ids = sort_array_with_ranking(np.array(compiled_circuit_ids), ranking)
 
     output_data["ranking"] = list(sorted_ids)
 

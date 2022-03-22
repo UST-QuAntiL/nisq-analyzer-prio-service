@@ -25,7 +25,7 @@ from plugins.es_optimizer.api import PLUGIN_BLP, RankSensitivitySchema
 from plugins.es_optimizer.parsing import get_metrics_from_compiled_circuits, parse_metric_info
 from plugins.es_optimizer.plugin import EsOptimizer
 from plugins.es_optimizer.sensitivity import find_changing_factors
-from plugins.es_optimizer.tools.ranking import convert_scores_to_ranking
+from plugins.es_optimizer.tools.ranking import convert_scores_to_ranking, sort_array_with_ranking
 from plugins.es_optimizer.weights import NormalizedWeights
 
 
@@ -122,6 +122,10 @@ def rank_sensitivity_task(self, db_id: int) -> str:
 
     decreasing_factors, decreasing_ranks, increasing_factors, increasing_ranks = find_changing_factors(mcda, [metrics], NormalizedWeights(weights), step_size, upper_bound, lower_bound)
 
+    # remove unused dimension
+    decreasing_ranks = [dr[0] if len(dr) > 0 else [] for dr in decreasing_ranks]
+    increasing_ranks = [ir[0] if len(ir) > 0 else [] for ir in increasing_ranks]
+
     output_data["decreasing_factors"] = replace_nan_with_none(decreasing_factors)
     output_data["disturbed_ranks_decreased"] = decreasing_ranks
     output_data["increasing_factors"] = replace_nan_with_none(increasing_factors)
@@ -130,12 +134,17 @@ def rank_sensitivity_task(self, db_id: int) -> str:
     fig = make_subplots(rows=2, cols=1, shared_xaxes=True, vertical_spacing=0.05)
     fig.update_yaxes({"range": [0.9, np.nanmax(increasing_factors) * 1.1]}, row=1)
     fig.update_yaxes({"range": [0, 1.1]}, row=2)
+
+    # create hover text for the plot, disturbed ranking are sorted to make the comparison to the original ranking easier
+    decreasing_ranks_text = [str(sort_array_with_ranking(np.array(dr), original_ranking)) if len(dr) > 0 else "" for dr in decreasing_ranks]
+    increasing_ranks_text = [str(sort_array_with_ranking(np.array(ir), original_ranking)) if len(ir) > 0 else "" for ir in increasing_ranks]
+
     fig.add_trace(
-        go.Scatter(x=metric_names, y=increasing_factors, name="increasing factors", mode="markers", marker={"symbol": "triangle-up", "size": 10}),
+        go.Scatter(x=metric_names, y=increasing_factors, name="increasing factors", mode="markers", marker={"symbol": "triangle-up", "size": 10}, hovertext=increasing_ranks_text),
         row=1, col=1
     )
     fig.add_trace(
-        go.Scatter(x=metric_names, y=decreasing_factors, name="decreasing factors", mode="markers", marker={"symbol": "triangle-up", "size": 10}),
+        go.Scatter(x=metric_names, y=decreasing_factors, name="decreasing factors", mode="markers", marker={"symbol": "triangle-up", "size": 10}, hovertext=decreasing_ranks_text),
         row=2, col=1
     )
 
