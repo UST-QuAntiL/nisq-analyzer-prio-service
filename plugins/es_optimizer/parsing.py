@@ -20,12 +20,12 @@ def get_histogram_intersections_from_compiled_circuits(compiled_circuits: List[D
 
 
 def parse_metric_info(task_parameters: Dict) -> Tuple[np.ndarray, np.ndarray, List[str]]:
-    weights = np.zeros(len(task_parameters["metrics"]), dtype=float)
-    is_cost = np.zeros(len(task_parameters["metrics"]), dtype=float)  # 1.0 = profit, -1.0 = cost
+    weights = np.zeros(len(task_parameters["metric_weights"]), dtype=float)
+    is_cost = np.zeros(len(task_parameters["metric_weights"]), dtype=float)  # 1.0 = profit, -1.0 = cost
     metric_names = []
     metric_index = 0
 
-    for metric_name, metric_data in task_parameters["metrics"].items():
+    for metric_name, metric_data in task_parameters["metric_weights"].items():
         weights[metric_index] = metric_data["weight"]
         is_cost[metric_index] = -1.0 if metric_data["is_cost"] is True else 1.0
         metric_names.append(metric_name)

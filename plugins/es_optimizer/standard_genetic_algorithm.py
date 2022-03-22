@@ -4,14 +4,16 @@ from typing import List, Tuple
 import numpy as np
 from celery.utils.log import get_task_logger
 from pymcdm.methods.mcda_method import MCDA_method
-from sklearn import preprocessing
 
 from plugins.es_optimizer.objective_functions import objective_function_array
+from plugins.es_optimizer.weights import Weights, NormalizedWeights
 
 
 def roulette_wheel_selection(weights: np.ndarray, fitness: np.ndarray, rng: np.random.Generator) -> np.ndarray:
-    zero_min_fitness = fitness - np.min(fitness)
-    probability = zero_min_fitness / np.sum(zero_min_fitness)
+    zero_min_fitness = fitness - np.nanmin(fitness)
+    probability: np.ndarray = zero_min_fitness / np.nansum(zero_min_fitness)
+
+    probability[np.isnan(probability)] = 0
 
     return rng.choice(weights, size=1, p=probability).reshape((-1))
 
@@ -39,7 +41,7 @@ TASK_LOGGER = get_task_logger(__name__)
 
 def standard_genetic_algorithm(
     mcda: MCDA_method, metrics: List[np.ndarray], histogram_intersection: List[np.ndarray],
-    is_cost: np.ndarray) -> np.ndarray:
+    is_cost: np.ndarray) -> NormalizedWeights:
     population_size = 100
     mutation_rate = 0.2
     crossover_rate = 0.85
@@ -95,6 +97,6 @@ def standard_genetic_algorithm(
 
         weights = np.stack(new_weights)
 
-    best_weights = preprocessing.MinMaxScaler().fit_transform(weights[0].reshape((-1, 1))).reshape((-1))
+    best_weights = Weights.normalize(weights[0])
 
-    return best_weights / np.sum(best_weights)
+    return best_weights

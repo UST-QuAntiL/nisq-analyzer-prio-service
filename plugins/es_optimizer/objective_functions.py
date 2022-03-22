@@ -3,26 +3,25 @@ from typing import List
 import numpy as np
 from celery.utils.log import get_task_logger
 from pymcdm.methods.mcda_method import MCDA_method
-from sklearn import preprocessing
+
+from plugins.es_optimizer.weights import Weights
 
 TASK_LOGGER = get_task_logger(__name__)
 
 
 def objective_function(mcda: MCDA_method, metrics: np.ndarray, histogram_intersection: np.ndarray, weights: np.ndarray, is_cost: np.ndarray) -> float:
     target_scores = histogram_intersection
-    weights = preprocessing.MinMaxScaler().fit_transform(weights.reshape((-1, 1))).reshape((-1))
-    weights /= np.sum(weights)
-    scores = mcda(metrics, weights, is_cost)
+    scores = mcda(metrics, Weights.normalize(weights).normalized_weights, is_cost)
 
     # normalization
-    target_scores -= np.min(target_scores)
-    target_scores /= np.max(target_scores)
+    normalized_target_scores = target_scores - np.min(target_scores)
+    normalized_target_scores /= np.max(normalized_target_scores)
 
-    scores -= np.min(scores)
-    scores /= np.max(scores)
+    normalized_scores = scores - np.min(scores)
+    normalized_scores /= np.max(normalized_scores)
 
     # mean square error
-    loss = np.mean((target_scores - scores) * (target_scores - scores))
+    loss = np.mean((normalized_target_scores - normalized_scores) * (normalized_target_scores - normalized_scores))
 
     return loss.item()
 

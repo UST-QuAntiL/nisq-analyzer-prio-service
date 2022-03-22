@@ -1,9 +1,10 @@
 import json
+import math
 from datetime import datetime
 from http import HTTPStatus
 from json import dumps, loads
 from tempfile import SpooledTemporaryFile
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, List
 
 import numpy as np
 from celery import chain
@@ -11,15 +12,21 @@ from celery.utils.log import get_task_logger
 from flask import redirect, url_for
 from flask.views import MethodView
 from marshmallow import EXCLUDE
+from plotly.subplots import make_subplots
 from pymcdm.methods import TOPSIS, PROMETHEE_II
 from qhana_plugin_runner.celery import CELERY
 from qhana_plugin_runner.db.models.tasks import ProcessingTask
 from qhana_plugin_runner.storage import STORE
 from qhana_plugin_runner.tasks import save_task_result, save_task_error
+import plotly.express as px
+import plotly.graph_objects as go
 
 from plugins.es_optimizer.api import PLUGIN_BLP, RankSensitivitySchema
 from plugins.es_optimizer.parsing import get_metrics_from_compiled_circuits, parse_metric_info
 from plugins.es_optimizer.plugin import EsOptimizer
+from plugins.es_optimizer.sensitivity import find_changing_factors
+from plugins.es_optimizer.tools.ranking import convert_scores_to_ranking, sort_array_with_ranking
+from plugins.es_optimizer.weights import NormalizedWeights
 
 
 @PLUGIN_BLP.route("/rank-sensitivity")
@@ -63,6 +70,18 @@ class ProcessView(MethodView):
 TASK_LOGGER = get_task_logger(__name__)
 
 
+def replace_nan_with_none(float_list: List[float]) -> List[float]:
+    new_list = []
+
+    for f in float_list:
+        if math.isnan(f):
+            new_list.append(None)
+        else:
+            new_list.append(f)
+
+    return new_list
+
+
 # task names must be globally unique => use full versioned plugin identifier to scope name
 @CELERY.task(name=f"{EsOptimizer.instance.identifier}.rank_sensitivity_task", bind=True)
 def rank_sensitivity_task(self, db_id: int) -> str:
@@ -92,41 +111,53 @@ def rank_sensitivity_task(self, db_id: int) -> str:
     else:
         raise ValueError("Unknown method: " + str(task_parameters["method"]))
 
-    original_ranking = np.argsort(-mcda(metrics, weights, is_cost))
-    unitary_variation_ratios = task_parameters["unitary_variation_ratios"]
+    original_ranking = convert_scores_to_ranking(mcda(metrics, weights, is_cost), True)
+    step_size: float = task_parameters["step_size"]
+    upper_bound: float = task_parameters["upper_bound"]
+    lower_bound: float = task_parameters["lower_bound"]
 
     output_data = {
-        "results": [],
         "original_ranking": original_ranking.tolist()
     }
 
-    for i in range(len(unitary_variation_ratios)):
-        current_uni_vari = unitary_variation_ratios[i]
+    decreasing_factors, decreasing_ranks, increasing_factors, increasing_ranks = find_changing_factors(mcda, [metrics], NormalizedWeights(weights), step_size, upper_bound, lower_bound)
 
-        new_result = {
-            "unitary_variation_ratio": current_uni_vari,
-            "disturbed_weights": [],
-            "disturbed_rankings": []
-        }
+    # remove unused dimension
+    decreasing_ranks = [dr[0] if len(dr) > 0 else [] for dr in decreasing_ranks]
+    increasing_ranks = [ir[0] if len(ir) > 0 else [] for ir in increasing_ranks]
 
-        for j in range(len(weights)):
-            current_weight = weights[j]
-            initial_variation_ratio = (current_uni_vari - current_uni_vari * current_weight) / (1 - current_uni_vari * current_weight)
+    output_data["decreasing_factors"] = replace_nan_with_none(decreasing_factors)
+    output_data["disturbed_ranks_decreased"] = decreasing_ranks
+    output_data["increasing_factors"] = replace_nan_with_none(increasing_factors)
+    output_data["disturbed_ranks_increased"] = increasing_ranks
 
-            disturbed_weights = weights.copy()
-            disturbed_weights[j] *= initial_variation_ratio
-            disturbed_weights /= np.sum(disturbed_weights)
-            new_result["disturbed_weights"].append(disturbed_weights.tolist())
+    fig = make_subplots(rows=2, cols=1, shared_xaxes=True, vertical_spacing=0.05)
+    fig.update_yaxes({"range": [0.9, np.nanmax(increasing_factors) * 1.1]}, row=1)
+    fig.update_yaxes({"range": [0, 1.1]}, row=2)
 
-            disturbed_ranking = np.argsort(-mcda(metrics, disturbed_weights, is_cost))
-            new_result["disturbed_rankings"].append(disturbed_ranking.tolist())
+    # create hover text for the plot, disturbed ranking are sorted to make the comparison to the original ranking easier
+    decreasing_ranks_text = [str(sort_array_with_ranking(np.array(dr), original_ranking)) if len(dr) > 0 else "" for dr in decreasing_ranks]
+    increasing_ranks_text = [str(sort_array_with_ranking(np.array(ir), original_ranking)) if len(ir) > 0 else "" for ir in increasing_ranks]
 
-        output_data["results"].append(new_result)
+    fig.add_trace(
+        go.Scatter(x=metric_names, y=increasing_factors, name="increasing factors", mode="markers", marker={"symbol": "triangle-up", "size": 10}, hovertext=increasing_ranks_text),
+        row=1, col=1
+    )
+    fig.add_trace(
+        go.Scatter(x=metric_names, y=decreasing_factors, name="decreasing factors", mode="markers", marker={"symbol": "triangle-up", "size": 10}, hovertext=decreasing_ranks_text),
+        row=2, col=1
+    )
 
     with SpooledTemporaryFile(mode="wt") as output_file:
         json.dump(output_data, output_file)
         STORE.persist_task_result(
             db_id, output_file, "sensitivity.json", "text", "application/json"
+        )
+
+    with SpooledTemporaryFile(mode="wt") as output_file:
+        fig.write_html(output_file)
+        STORE.persist_task_result(
+            db_id, output_file, "plot.html", "plot", "text/html"
         )
 
     return "finished"

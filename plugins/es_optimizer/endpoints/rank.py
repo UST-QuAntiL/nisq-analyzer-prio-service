@@ -21,6 +21,8 @@ from sklearn import preprocessing
 from plugins.es_optimizer.api import PLUGIN_BLP, RankSchema
 from plugins.es_optimizer.parsing import get_metrics_from_compiled_circuits, parse_metric_info
 from plugins.es_optimizer.plugin import EsOptimizer
+from plugins.es_optimizer.tools.ranking import convert_scores_to_ranking, sort_array_with_ranking
+from plugins.es_optimizer.weights import NormalizedWeights
 
 
 @PLUGIN_BLP.route("/rank")
@@ -82,18 +84,18 @@ def rank_task(self, db_id: int) -> str:
     task_parameters: Dict[str, Any] = loads(task_data.parameters or "{}")
 
     weights, is_cost, metric_names = parse_metric_info(task_parameters)
-    weights = preprocessing.MinMaxScaler().fit_transform(weights.reshape((-1, 1))).reshape(-1)
-    weights /= np.sum(weights)
+    weights = NormalizedWeights(weights)  # TODO: check that the weights are already normalized
 
     compiled_circuits = task_parameters["circuits"][0]["compiled_circuits"]
     metrics = get_metrics_from_compiled_circuits(compiled_circuits, metric_names)
+    mcda_method_name = task_parameters["mcda_method"]
 
-    if task_parameters["method"] == "topsis":
-        scores = TOPSIS()(metrics, weights, is_cost)
-    elif task_parameters["method"] == "promethee_ii":
-        scores = PROMETHEE_II("usual")(metrics, weights, is_cost)
+    if mcda_method_name == "topsis":
+        scores = TOPSIS()(metrics, weights.normalized_weights, is_cost)
+    elif mcda_method_name == "promethee_ii":
+        scores = PROMETHEE_II("usual")(metrics, weights.normalized_weights, is_cost)
     else:
-        raise ValueError("Unknown method: " + str(task_parameters["method"]))
+        raise ValueError("Unknown method: " + mcda_method_name)
 
     output_data = {
         "scores": {},
@@ -104,8 +106,8 @@ def rank_task(self, db_id: int) -> str:
     for compiled_circuit_id, score in zip(compiled_circuit_ids, scores):
         output_data["scores"][compiled_circuit_id] = score
 
-    sorted_indices = np.argsort(-scores)
-    sorted_ids = np.array(compiled_circuit_ids)[sorted_indices]
+    ranking = convert_scores_to_ranking(scores, True)
+    sorted_ids = sort_array_with_ranking(np.array(compiled_circuit_ids), ranking)
 
     output_data["ranking"] = list(sorted_ids)
 
