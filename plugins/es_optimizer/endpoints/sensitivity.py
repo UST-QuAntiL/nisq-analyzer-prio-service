@@ -22,7 +22,8 @@ import plotly.express as px
 import plotly.graph_objects as go
 
 from plugins.es_optimizer.api import PLUGIN_BLP, RankSensitivitySchema
-from plugins.es_optimizer.parsing import get_metrics_from_compiled_circuits, parse_metric_info
+from plugins.es_optimizer.parsing import get_metrics_from_compiled_circuits, parse_metric_info, \
+    get_rankings_for_borda_count
 from plugins.es_optimizer.plugin import EsOptimizer
 from plugins.es_optimizer.sensitivity import find_changing_factors
 from plugins.es_optimizer.tools.ranking import convert_scores_to_ranking, sort_array_with_ranking
@@ -120,7 +121,9 @@ def rank_sensitivity_task(self, db_id: int) -> str:
         "original_ranking": original_ranking.tolist()
     }
 
-    decreasing_factors, decreasing_ranks, increasing_factors, increasing_ranks = find_changing_factors(mcda, [metrics], NormalizedWeights(weights), step_size, upper_bound, lower_bound)
+    rankings_for_borda = get_rankings_for_borda_count(task_parameters, 0)
+
+    decreasing_factors, decreasing_ranks, increasing_factors, increasing_ranks = find_changing_factors(mcda, [metrics], NormalizedWeights(weights), [rankings_for_borda], step_size, upper_bound, lower_bound)
 
     # remove unused dimension
     decreasing_ranks = [dr[0] if len(dr) > 0 else [] for dr in decreasing_ranks]
