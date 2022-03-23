@@ -19,7 +19,9 @@ from qhana_plugin_runner.tasks import save_task_result, save_task_error
 from sklearn import preprocessing
 
 from plugins.es_optimizer.api import PLUGIN_BLP, RankSchema
-from plugins.es_optimizer.parsing import get_metrics_from_compiled_circuits, parse_metric_info
+from plugins.es_optimizer.borda_count import borda_count_rank
+from plugins.es_optimizer.parsing import get_metrics_from_compiled_circuits, parse_metric_info, \
+    get_rankings_for_borda_count
 from plugins.es_optimizer.plugin import EsOptimizer
 from plugins.es_optimizer.tools.ranking import convert_scores_to_ranking, sort_array_with_ranking
 from plugins.es_optimizer.weights import NormalizedWeights
@@ -110,6 +112,13 @@ def rank_task(self, db_id: int) -> str:
     sorted_ids = sort_array_with_ranking(np.array(compiled_circuit_ids), ranking)
 
     output_data["ranking"] = list(sorted_ids)
+
+    rankings_for_borda = get_rankings_for_borda_count(task_parameters, 0)
+
+    if len(rankings_for_borda) > 0:
+        borda_rank = borda_count_rank([ranking] + rankings_for_borda)
+
+        output_data["borda_count_ranking"] = list(sort_array_with_ranking(np.array(compiled_circuit_ids), borda_rank))
 
     with SpooledTemporaryFile(mode="wt") as output_file:
         json.dump(output_data, output_file)

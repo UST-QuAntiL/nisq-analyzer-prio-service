@@ -137,6 +137,14 @@ class RankSensitivitySchema(FrontendFormBaseSchema):
         required=True,
         allow_none=False,
     )
+    borda_count_metrics = ma.fields.Dict(
+        keys=ma.fields.String(),
+        values=ma.fields.Nested(
+            BordaCountSchema
+        ),
+        required=True,
+        allow_none=False
+    )
     circuits = ma.fields.List(
         ma.fields.Nested(CircuitSchema),
         required=True,
