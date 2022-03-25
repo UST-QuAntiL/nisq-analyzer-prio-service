@@ -5,18 +5,15 @@ from json import dumps, loads
 from tempfile import SpooledTemporaryFile
 from typing import Optional, Dict, Any
 
-import numpy as np
 from celery import chain
 from celery.utils.log import get_task_logger
 from flask import redirect, url_for
 from flask.views import MethodView
 from marshmallow import EXCLUDE
-from pymcdm.methods import TOPSIS, PROMETHEE_II
 from qhana_plugin_runner.celery import CELERY
 from qhana_plugin_runner.db.models.tasks import ProcessingTask
 from qhana_plugin_runner.storage import STORE
 from qhana_plugin_runner.tasks import save_task_result, save_task_error
-from scipy.optimize import minimize
 
 from plugins.es_optimizer.api import PLUGIN_BLP, LearnRankingSchema
 from plugins.es_optimizer.evolutionary_strategy import evolutionary_strategy
@@ -71,6 +68,10 @@ TASK_LOGGER = get_task_logger(__name__)
 
 @CELERY.task(name=f"{EsOptimizer.instance.identifier}.learn_ranking_task", bind=True)
 def learn_ranking_task(self, db_id: int) -> str:
+    import numpy as np
+    from pymcdm.methods import TOPSIS, PROMETHEE_II
+    from scipy.optimize import minimize
+
     """The main background task of the plugin ES Optimizer."""
     TASK_LOGGER.info(f"Starting new background task for plugin ES Optimizer with db id '{db_id}'")
 

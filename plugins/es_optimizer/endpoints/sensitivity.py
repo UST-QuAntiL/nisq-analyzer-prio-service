@@ -6,20 +6,15 @@ from json import dumps, loads
 from tempfile import SpooledTemporaryFile
 from typing import Optional, Dict, Any, List
 
-import numpy as np
 from celery import chain
 from celery.utils.log import get_task_logger
 from flask import redirect, url_for
 from flask.views import MethodView
 from marshmallow import EXCLUDE
-from plotly.subplots import make_subplots
-from pymcdm.methods import TOPSIS, PROMETHEE_II
 from qhana_plugin_runner.celery import CELERY
 from qhana_plugin_runner.db.models.tasks import ProcessingTask
 from qhana_plugin_runner.storage import STORE
 from qhana_plugin_runner.tasks import save_task_result, save_task_error
-import plotly.express as px
-import plotly.graph_objects as go
 
 from plugins.es_optimizer.api import PLUGIN_BLP, RankSensitivitySchema
 from plugins.es_optimizer.parsing import get_metrics_from_compiled_circuits, parse_metric_info, \
@@ -86,6 +81,11 @@ def replace_nan_with_none(float_list: List[float]) -> List[float]:
 # task names must be globally unique => use full versioned plugin identifier to scope name
 @CELERY.task(name=f"{EsOptimizer.instance.identifier}.rank_sensitivity_task", bind=True)
 def rank_sensitivity_task(self, db_id: int) -> str:
+    import numpy as np
+    from plotly.subplots import make_subplots
+    from pymcdm.methods import TOPSIS, PROMETHEE_II
+    import plotly.graph_objects as go
+
     """The main background task of the plugin ES Optimizer."""
     TASK_LOGGER.info(f"Starting new background task for plugin ES Optimizer with db id '{db_id}'")
 
