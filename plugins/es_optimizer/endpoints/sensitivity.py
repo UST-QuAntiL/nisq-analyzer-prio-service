@@ -122,7 +122,7 @@ def rank_sensitivity_task(self, db_id: int) -> str:
 
     rankings_for_borda = get_rankings_for_borda_count(task_parameters, 0)
 
-    decreasing_factors, decreasing_ranks, increasing_factors, increasing_ranks = find_changing_factors(mcda, [metrics], NormalizedWeights(weights), [rankings_for_borda], step_size, upper_bound, lower_bound)
+    decreasing_factors, decreasing_ranks, increasing_factors, increasing_ranks = find_changing_factors(mcda, [metrics], is_cost, NormalizedWeights(weights), [rankings_for_borda], step_size, upper_bound, lower_bound)
 
     # remove unused dimension
     decreasing_ranks = [dr[0] if len(dr) > 0 else [] for dr in decreasing_ranks]

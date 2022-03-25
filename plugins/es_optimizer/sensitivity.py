@@ -6,12 +6,11 @@ from pymcdm.methods.mcda_method import MCDA_method
 
 from . import rank_correlation
 from .borda_count import borda_count_rank
-from .experiments.tools.data_loader import is_cost
 from .tools.ranking import create_mcda_ranking
 from .weights import NormalizedWeights
 
 
-def calculate_average_spearman(mcda: MCDA_method, metrics: List[np.ndarray], original_weights: NormalizedWeights, disturbed_weights: NormalizedWeights, rankings_for_borda: List[List[np.ndarray]] = None) -> float:
+def calculate_average_spearman(mcda: MCDA_method, metrics: List[np.ndarray], is_cost: np.ndarray, original_weights: NormalizedWeights, disturbed_weights: NormalizedWeights, rankings_for_borda: List[List[np.ndarray]] = None) -> float:
     average_spearman = 0
 
     for i, m in enumerate(metrics):
@@ -30,7 +29,7 @@ def calculate_average_spearman(mcda: MCDA_method, metrics: List[np.ndarray], ori
     return average_spearman
 
 
-def find_changing_factors(mcda: MCDA_method, metrics: List[np.ndarray], original_weights: NormalizedWeights, rankings_for_borda: List[List[np.ndarray]] = None, step_size: float = 0.01, upper_bound: float = 145, lower_bound: float = 0.00657) -> Tuple[List[float], List[List[List[float]]], List[float], List[List[List[float]]]]:
+def find_changing_factors(mcda: MCDA_method, metrics: List[np.ndarray], is_cost: np.ndarray, original_weights: NormalizedWeights, rankings_for_borda: List[List[np.ndarray]] = None, step_size: float = 0.01, upper_bound: float = 145, lower_bound: float = 0.00657) -> Tuple[List[float], List[List[List[float]]], List[float], List[List[List[float]]]]:
     def find_factors(factor_adjustment: float, iterations: int) -> Tuple[List[float], List[List[List[float]]]]:
         changing_factors = []
         changed_rankings = []
@@ -46,7 +45,7 @@ def find_changing_factors(mcda: MCDA_method, metrics: List[np.ndarray], original
                 disturbed_weights /= np.sum(disturbed_weights)
 
                 avg_spearman = calculate_average_spearman(
-                    mcda, metrics, original_weights, NormalizedWeights(disturbed_weights), rankings_for_borda)
+                    mcda, metrics, is_cost, original_weights, NormalizedWeights(disturbed_weights), rankings_for_borda)
 
                 if avg_spearman < 0.99999:
                     changing_factor = factor
