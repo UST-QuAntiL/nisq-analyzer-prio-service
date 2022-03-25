@@ -16,13 +16,7 @@ from qhana_plugin_runner.storage import STORE
 from qhana_plugin_runner.tasks import save_task_result, save_task_error
 
 from ..api import PLUGIN_BLP, LearnRankingSchema
-from ..evolutionary_strategy import evolutionary_strategy
-from ..objective_functions import objective_function_all_circuits
-from ..parsing import get_metrics_from_compiled_circuits, get_histogram_intersections_from_compiled_circuits, \
-    parse_metric_info
 from ..plugin import EsOptimizer
-from ..standard_genetic_algorithm import standard_genetic_algorithm
-from ..weights import Weights
 
 
 @PLUGIN_BLP.route("/learn-ranking")
@@ -71,6 +65,12 @@ def learn_ranking_task(self, db_id: int) -> str:
     import numpy as np
     from pymcdm.methods import TOPSIS, PROMETHEE_II
     from scipy.optimize import minimize
+    from ..evolutionary_strategy import evolutionary_strategy
+    from ..objective_functions import objective_function_all_circuits
+    from ..parsing import get_metrics_from_compiled_circuits, get_histogram_intersections_from_compiled_circuits, \
+        parse_metric_info
+    from ..standard_genetic_algorithm import standard_genetic_algorithm
+    from ..weights import Weights
 
     """The main background task of the plugin ES Optimizer."""
     TASK_LOGGER.info(f"Starting new background task for plugin ES Optimizer with db id '{db_id}'")

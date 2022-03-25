@@ -17,11 +17,7 @@ from qhana_plugin_runner.storage import STORE
 from qhana_plugin_runner.tasks import save_task_result, save_task_error
 
 from ..api import PLUGIN_BLP, RankSensitivitySchema
-from ..parsing import get_metrics_from_compiled_circuits, parse_metric_info, get_rankings_for_borda_count
 from ..plugin import EsOptimizer
-from ..sensitivity import find_changing_factors
-from ..tools.ranking import convert_scores_to_ranking, sort_array_with_ranking
-from ..weights import NormalizedWeights
 
 
 @PLUGIN_BLP.route("/rank-sensitivity")
@@ -84,6 +80,10 @@ def rank_sensitivity_task(self, db_id: int) -> str:
     from plotly.subplots import make_subplots
     from pymcdm.methods import TOPSIS, PROMETHEE_II
     import plotly.graph_objects as go
+    from ..parsing import get_metrics_from_compiled_circuits, parse_metric_info, get_rankings_for_borda_count
+    from ..sensitivity import find_changing_factors
+    from ..tools.ranking import convert_scores_to_ranking, sort_array_with_ranking
+    from ..weights import NormalizedWeights
 
     """The main background task of the plugin ES Optimizer."""
     TASK_LOGGER.info(f"Starting new background task for plugin ES Optimizer with db id '{db_id}'")
