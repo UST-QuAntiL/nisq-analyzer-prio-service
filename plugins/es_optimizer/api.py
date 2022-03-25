@@ -29,6 +29,9 @@ PLUGIN_BLP = SecurityBlueprint( #SecurityBlueprint for eventual JWT support
 
 
 class MetricSchema(FrontendFormBaseSchema):
+    class Meta:
+        unknown = EXCLUDE
+
     weight = ma.fields.Float(
         required=True,
         allow_none=False
@@ -40,6 +43,9 @@ class MetricSchema(FrontendFormBaseSchema):
 
 
 class BordaCountSchema(FrontendFormBaseSchema):
+    class Meta:
+        unknown = EXCLUDE
+
     is_cost = ma.fields.Bool(
         required=True,
         allow_none=False
@@ -47,6 +53,9 @@ class BordaCountSchema(FrontendFormBaseSchema):
 
 
 class CircuitSchema(FrontendFormBaseSchema):
+    class Meta:
+        unknown = EXCLUDE
+
     id = ma.fields.String(
         required=True,
         allow_none=False
@@ -61,6 +70,9 @@ class CircuitSchema(FrontendFormBaseSchema):
 
 
 class RankSchema(FrontendFormBaseSchema):
+    class Meta:
+        unknown = EXCLUDE
+
     mcda_method = ma.fields.String(
         required=True,
         allow_none=False
@@ -89,6 +101,9 @@ class RankSchema(FrontendFormBaseSchema):
 
 
 class LearnRankingSchema(FrontendFormBaseSchema):
+    class Meta:
+        unknown = EXCLUDE
+
     mcda_method = ma.fields.String(
         required=True,
         allow_none=False
@@ -113,6 +128,9 @@ class LearnRankingSchema(FrontendFormBaseSchema):
 
 
 class RankSensitivitySchema(FrontendFormBaseSchema):
+    class Meta:
+        unknown = EXCLUDE
+
     mcda_method = ma.fields.String(
         required=True,
         allow_none=False
