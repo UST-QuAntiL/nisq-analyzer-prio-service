@@ -2,7 +2,7 @@ import numpy as np
 from pymcdm.methods import TOPSIS
 from pymcdm.methods.mcda_method import MCDA_method
 
-from plugins.es_optimizer.weights import NormalizedWeights
+from ..weights import NormalizedWeights
 
 
 def convert_scores_to_ranking(scores: np.ndarray, higher_scores_are_better: bool) -> np.ndarray:

@@ -2,7 +2,7 @@ from typing import List
 
 import numpy as np
 
-from plugins.es_optimizer.tools.ranking import convert_scores_to_ranking
+from .tools.ranking import convert_scores_to_ranking
 
 
 def borda_count_rank(rankings: List[np.ndarray]) -> np.ndarray:

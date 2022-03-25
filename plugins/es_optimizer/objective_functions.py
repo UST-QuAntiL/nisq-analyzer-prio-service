@@ -4,7 +4,7 @@ import numpy as np
 from celery.utils.log import get_task_logger
 from pymcdm.methods.mcda_method import MCDA_method
 
-from plugins.es_optimizer.weights import Weights
+from .weights import Weights
 
 TASK_LOGGER = get_task_logger(__name__)
 

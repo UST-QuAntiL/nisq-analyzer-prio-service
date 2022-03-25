@@ -4,11 +4,11 @@ from typing import List, Tuple
 import numpy as np
 from pymcdm.methods.mcda_method import MCDA_method
 
-from plugins.es_optimizer import rank_correlation
-from plugins.es_optimizer.borda_count import borda_count_rank
-from plugins.es_optimizer.experiments.tools.data_loader import is_cost
-from plugins.es_optimizer.tools.ranking import create_mcda_ranking
-from plugins.es_optimizer.weights import NormalizedWeights
+from . import rank_correlation
+from .borda_count import borda_count_rank
+from .experiments.tools.data_loader import is_cost
+from .tools.ranking import create_mcda_ranking
+from .weights import NormalizedWeights
 
 
 def calculate_average_spearman(mcda: MCDA_method, metrics: List[np.ndarray], original_weights: NormalizedWeights, disturbed_weights: NormalizedWeights, rankings_for_borda: List[List[np.ndarray]] = None) -> float:

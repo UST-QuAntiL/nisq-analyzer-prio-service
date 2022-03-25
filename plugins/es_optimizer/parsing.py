@@ -2,7 +2,7 @@ from typing import List, Dict, Tuple
 
 import numpy as np
 
-from plugins.es_optimizer.tools.ranking import convert_scores_to_ranking
+from .tools.ranking import convert_scores_to_ranking
 
 
 def get_metrics_from_compiled_circuits(compiled_circuits: List[Dict], metric_names: List[str]) -> np.ndarray:

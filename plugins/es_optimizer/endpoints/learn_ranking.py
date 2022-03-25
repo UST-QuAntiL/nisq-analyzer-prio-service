@@ -15,14 +15,14 @@ from qhana_plugin_runner.db.models.tasks import ProcessingTask
 from qhana_plugin_runner.storage import STORE
 from qhana_plugin_runner.tasks import save_task_result, save_task_error
 
-from plugins.es_optimizer.api import PLUGIN_BLP, LearnRankingSchema
-from plugins.es_optimizer.evolutionary_strategy import evolutionary_strategy
-from plugins.es_optimizer.objective_functions import objective_function_all_circuits
-from plugins.es_optimizer.parsing import get_metrics_from_compiled_circuits, \
-    get_histogram_intersections_from_compiled_circuits, parse_metric_info
-from plugins.es_optimizer.plugin import EsOptimizer
-from plugins.es_optimizer.standard_genetic_algorithm import standard_genetic_algorithm
-from plugins.es_optimizer.weights import Weights
+from ..api import PLUGIN_BLP, LearnRankingSchema
+from ..evolutionary_strategy import evolutionary_strategy
+from ..objective_functions import objective_function_all_circuits
+from ..parsing import get_metrics_from_compiled_circuits, get_histogram_intersections_from_compiled_circuits, \
+    parse_metric_info
+from ..plugin import EsOptimizer
+from ..standard_genetic_algorithm import standard_genetic_algorithm
+from ..weights import Weights
 
 
 @PLUGIN_BLP.route("/learn-ranking")

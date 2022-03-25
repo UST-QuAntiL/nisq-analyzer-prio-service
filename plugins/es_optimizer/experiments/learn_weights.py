@@ -8,15 +8,15 @@ from pymcdm.methods import TOPSIS, PROMETHEE_II
 from pymcdm.methods.mcda_method import MCDA_method
 from scipy.optimize import minimize
 
-from plugins.es_optimizer import rank_correlation
-from plugins.es_optimizer.evolutionary_strategy import evolutionary_strategy
-from plugins.es_optimizer.experiments.tools import data_loader
-from plugins.es_optimizer.experiments.tools.data_loader import load_csv_and_add_headers, \
-    get_metrics_and_histogram_intersections, convert_weights_array_to_dict, is_cost, create_random_training_test_split
-from plugins.es_optimizer.experiments.tools.ranking import create_mcda_ranking, convert_scores_to_ranking
-from plugins.es_optimizer.objective_functions import objective_function_all_circuits
-from plugins.es_optimizer.standard_genetic_algorithm import standard_genetic_algorithm
-from plugins.es_optimizer.weights import Weights, NormalizedWeights
+from ..tools.ranking import create_mcda_ranking, convert_scores_to_ranking
+from .. import rank_correlation
+from ..evolutionary_strategy import evolutionary_strategy
+from .tools import data_loader
+from .tools.data_loader import load_csv_and_add_headers, get_metrics_and_histogram_intersections, \
+    convert_weights_array_to_dict, is_cost, create_random_training_test_split
+from ..objective_functions import objective_function_all_circuits
+from ..standard_genetic_algorithm import standard_genetic_algorithm
+from ..weights import Weights, NormalizedWeights
 
 mcda_methods = [TOPSIS(), PROMETHEE_II("usual")]
 learning_methods = ["es", "ga", "COBYLA"]

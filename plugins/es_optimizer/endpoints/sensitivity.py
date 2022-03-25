@@ -16,13 +16,12 @@ from qhana_plugin_runner.db.models.tasks import ProcessingTask
 from qhana_plugin_runner.storage import STORE
 from qhana_plugin_runner.tasks import save_task_result, save_task_error
 
-from plugins.es_optimizer.api import PLUGIN_BLP, RankSensitivitySchema
-from plugins.es_optimizer.parsing import get_metrics_from_compiled_circuits, parse_metric_info, \
-    get_rankings_for_borda_count
-from plugins.es_optimizer.plugin import EsOptimizer
-from plugins.es_optimizer.sensitivity import find_changing_factors
-from plugins.es_optimizer.tools.ranking import convert_scores_to_ranking, sort_array_with_ranking
-from plugins.es_optimizer.weights import NormalizedWeights
+from ..api import PLUGIN_BLP, RankSensitivitySchema
+from ..parsing import get_metrics_from_compiled_circuits, parse_metric_info, get_rankings_for_borda_count
+from ..plugin import EsOptimizer
+from ..sensitivity import find_changing_factors
+from ..tools.ranking import convert_scores_to_ranking, sort_array_with_ranking
+from ..weights import NormalizedWeights
 
 
 @PLUGIN_BLP.route("/rank-sensitivity")

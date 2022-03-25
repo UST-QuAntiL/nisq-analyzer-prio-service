@@ -5,10 +5,10 @@ from pandas import DataFrame
 from pymcdm.methods import TOPSIS
 from pymcdm.methods.mcda_method import MCDA_method
 
-from plugins.es_optimizer.borda_count import borda_count_rank
-from plugins.es_optimizer.experiments.tools.data_loader import load_csv_and_add_headers, is_cost
-from plugins.es_optimizer.experiments.tools.ranking import convert_scores_to_ranking, create_mcda_ranking
-from plugins.es_optimizer.weights import NormalizedWeights
+from ..tools.ranking import convert_scores_to_ranking, create_mcda_ranking
+from ..borda_count import borda_count_rank
+from .tools.data_loader import load_csv_and_add_headers, is_cost
+from ..weights import NormalizedWeights
 
 
 class SingleCircuitData:
