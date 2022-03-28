@@ -138,8 +138,8 @@ def rank_sensitivity_task(self, db_id: int) -> str:
     fig.update_yaxes({"range": [0, 1.1]}, row=2)
 
     # create hover text for the plot, disturbed ranking are sorted to make the comparison to the original ranking easier
-    decreasing_ranks_text = [str(sort_array_with_ranking(np.array(dr), original_ranking)) if len(dr) > 0 else "" for dr in decreasing_ranks]
-    increasing_ranks_text = [str(sort_array_with_ranking(np.array(ir), original_ranking)) if len(ir) > 0 else "" for ir in increasing_ranks]
+    decreasing_ranks_text = [str(sort_array_with_ranking(np.array(dr) + 1, original_ranking)) if len(dr) > 0 else "" for dr in decreasing_ranks]
+    increasing_ranks_text = [str(sort_array_with_ranking(np.array(ir) + 1, original_ranking)) if len(ir) > 0 else "" for ir in increasing_ranks]
 
     fig.add_trace(
         go.Scatter(x=metric_names, y=increasing_factors, name="increasing factors", mode="markers", marker={"symbol": "triangle-up", "size": 10}, hovertext=increasing_ranks_text),
