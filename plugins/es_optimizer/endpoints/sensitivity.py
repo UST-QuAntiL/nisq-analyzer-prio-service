@@ -130,7 +130,12 @@ def rank_sensitivity_task(self, db_id: int) -> str:
 
         output_data["original_borda_count_ranking"] = borda_rank.tolist()
 
-    decreasing_factors, decreasing_ranks, decreasing_borda_ranks, increasing_factors, increasing_ranks, increasing_borda_ranks = find_changing_factors(mcda, [metrics], is_cost, NormalizedWeights(weights), [rankings_for_borda], step_size, upper_bound, lower_bound)
+    if len(rankings_for_borda) > 0:
+        rankings_for_borda = [rankings_for_borda]
+    else:
+        rankings_for_borda = None
+
+    decreasing_factors, decreasing_ranks, decreasing_borda_ranks, increasing_factors, increasing_ranks, increasing_borda_ranks = find_changing_factors(mcda, [metrics], is_cost, NormalizedWeights(weights), rankings_for_borda, step_size, upper_bound, lower_bound)
 
     # remove unused dimension
     decreasing_ranks = [dr[0] if len(dr) > 0 else [] for dr in decreasing_ranks]
@@ -139,13 +144,13 @@ def rank_sensitivity_task(self, db_id: int) -> str:
     output_data["decreasing_factors"] = replace_nan_with_none(decreasing_factors)
     output_data["disturbed_ranks_decreased"] = decreasing_ranks
 
-    if len(decreasing_borda_ranks) > 0:
+    if rankings_for_borda is not None:
         output_data["disturbed_borda_ranks_decreased"] = decreasing_borda_ranks
 
     output_data["increasing_factors"] = replace_nan_with_none(increasing_factors)
     output_data["disturbed_ranks_increased"] = increasing_ranks
 
-    if len(increasing_borda_ranks) > 0:
+    if rankings_for_borda is not None:
         output_data["disturbed_borda_ranks_increased"] = increasing_borda_ranks
 
     fig = make_subplots(rows=2, cols=1, shared_xaxes=True, vertical_spacing=0.05)
