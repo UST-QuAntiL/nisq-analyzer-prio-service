@@ -111,12 +111,14 @@ def rank_sensitivity_task(self, db_id: int) -> str:
     else:
         raise ValueError("Unknown method: " + str(task_parameters["method"]))
 
-    original_ranking = convert_scores_to_ranking(mcda(metrics, weights, is_cost), True)
+    original_scores: np.ndarray = mcda(metrics, weights, is_cost)
+    original_ranking = convert_scores_to_ranking(original_scores, True)
     step_size: float = task_parameters["step_size"]
     upper_bound: float = task_parameters["upper_bound"]
     lower_bound: float = task_parameters["lower_bound"]
 
     output_data = {
+        "original_scores": original_scores.tolist(),
         "original_ranking": original_ranking.tolist()
     }
 
