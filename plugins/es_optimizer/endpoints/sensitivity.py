@@ -17,6 +17,7 @@ from qhana_plugin_runner.storage import STORE
 from qhana_plugin_runner.tasks import save_task_result, save_task_error
 
 from ..api import PLUGIN_BLP, RankSensitivitySchema
+from ..borda_count import borda_count_rank
 from ..plugin import EsOptimizer
 
 
@@ -124,7 +125,12 @@ def rank_sensitivity_task(self, db_id: int) -> str:
 
     rankings_for_borda = get_rankings_for_borda_count(task_parameters, 0)
 
-    decreasing_factors, decreasing_ranks, increasing_factors, increasing_ranks = find_changing_factors(mcda, [metrics], is_cost, NormalizedWeights(weights), [rankings_for_borda], step_size, upper_bound, lower_bound)
+    if len(rankings_for_borda) > 0:
+        borda_rank = borda_count_rank([original_ranking] + rankings_for_borda)
+
+        output_data["original_borda_count_ranking"] = borda_rank.tolist()
+
+    decreasing_factors, decreasing_ranks, decreasing_borda_ranks, increasing_factors, increasing_ranks, increasing_borda_ranks = find_changing_factors(mcda, [metrics], is_cost, NormalizedWeights(weights), [rankings_for_borda], step_size, upper_bound, lower_bound)
 
     # remove unused dimension
     decreasing_ranks = [dr[0] if len(dr) > 0 else [] for dr in decreasing_ranks]
@@ -132,8 +138,15 @@ def rank_sensitivity_task(self, db_id: int) -> str:
 
     output_data["decreasing_factors"] = replace_nan_with_none(decreasing_factors)
     output_data["disturbed_ranks_decreased"] = decreasing_ranks
+
+    if len(decreasing_borda_ranks) > 0:
+        output_data["disturbed_borda_ranks_decreased"] = decreasing_borda_ranks
+
     output_data["increasing_factors"] = replace_nan_with_none(increasing_factors)
     output_data["disturbed_ranks_increased"] = increasing_ranks
+
+    if len(increasing_borda_ranks) > 0:
+        output_data["disturbed_borda_ranks_increased"] = increasing_borda_ranks
 
     fig = make_subplots(rows=2, cols=1, shared_xaxes=True, vertical_spacing=0.05)
     fig.update_yaxes({"range": [0.9, np.nanmax(increasing_factors) * 1.1]}, row=1)

@@ -25,7 +25,7 @@ def main(dataset_path: str, learned_weights_path: str):
     original_weights = [NormalizedWeights(np.array(weights)) for weights in learned_weights_result["normalized_weights"]]
 
     with Pool(8) as p:
-        changing_factors_decrease, _, changing_factors_increase, _ = zip(*p.starmap(
+        changing_factors_decrease, _, _, changing_factors_increase, _, _ = zip(*p.starmap(
             find_changing_factors,
             zip(
                 [mcda] * len(original_weights),
