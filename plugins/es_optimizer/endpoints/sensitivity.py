@@ -154,8 +154,20 @@ def rank_sensitivity_task(self, db_id: int) -> str:
         output_data["disturbed_borda_ranks_increased"] = increasing_borda_ranks
 
     fig = make_subplots(rows=2, cols=1, shared_xaxes=True, vertical_spacing=0.05)
-    fig.update_yaxes({"range": [0.9, np.nanmax(increasing_factors) * 1.1]}, row=1)
-    fig.update_yaxes({"range": [0, 1.1]}, row=2)
+    fig.layout.update(
+        {
+            "title": {
+                "text": "Sensitivity Analysis<br><br><sup>Each metric weight was adapted based on the previously defined parameters. A triangle of a metric represents<br>the factor by which the original weight was adapted and for which a change of the original ranking was detected.<br>The closer a triangle is to 1, the more sensitive is the respective metric weight.</sup>",
+                "y": 0.9,
+                "yanchor": "top"
+            },
+            "margin": {
+                "t": 200
+            }
+        })
+    fig.update_yaxes({"range": [0.9, np.nanmax(increasing_factors) * 1.1], "title": "Gamma"}, row=1)
+    fig.update_yaxes({"range": [0, 1.1], "title": "Gamma"}, row=2)
+    fig.update_xaxes({"title": "Metrics"}, row=2)
 
     # create hover text for the plot, disturbed ranking are sorted to make the comparison to the original ranking easier
     decreasing_ranks_text = [str(sort_array_with_ranking(np.array(dr) + 1, original_ranking)) if len(dr) > 0 else "" for dr in decreasing_ranks]
