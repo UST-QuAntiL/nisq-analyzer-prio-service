@@ -52,9 +52,13 @@ class LearnRankingView(MethodView):
             raise e  # and raise exception again
 
         # redirect to the created task resource (constructed from the ProcessingTask saved in the DB)
-        return redirect(
+        response = redirect(
             url_for("tasks-api.TaskView", task_id=str(db_task.id)), HTTPStatus.SEE_OTHER
         )
+
+        response.autocorrect_location_header = True
+
+        return response
 
 
 TASK_LOGGER = get_task_logger(__name__)
