@@ -49,6 +49,12 @@ To stop all components run `docker-compose down`. (hint: all docker compose comm
 Open <http://localhost:4200/#/settings> and add `http://localhost:5005` to the Plugin Endpoints.
 
 
+### Install Plugin Dependencies
+
+Use `poetry run flask install` to install the plugin dependencies.
+Otherwise, you will get `ModuleNotFoundError`.
+
+
 ### Start the Plugin Runner
 
 Restart the plugin runner after code changes to load new code!
