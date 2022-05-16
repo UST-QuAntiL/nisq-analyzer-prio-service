@@ -60,7 +60,8 @@ This will start both the server and the worker process.
 
 Manual:
 
-Make sure your environment variables contain all variables set in `.env` and `.flaskenv` before continuing.
+**IMPORTANT: If you are not using VSCode you need to make sure your environment variables contain all variables set in `.env` and `.flaskenv` before continuing.
+The VSCode config does this automatically, but if you are not using it you need to set the environment variables yourself in the terminals you use to run the flask server and the celery worker.**
 
 Start the flask server with `flask run`
 
