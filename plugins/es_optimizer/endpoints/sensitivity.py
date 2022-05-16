@@ -169,8 +169,8 @@ def rank_sensitivity_task(self, db_id: int) -> str:
                 "t": 200
             }
         })
-    fig.update_yaxes({"range": [np.nanmax(increasing_factors) * 1.1, 0.9], "title": "Sensitivity for ascending factors"}, row=1)
-    fig.update_yaxes({"range": [0, 1.1], "title": "Sensitivity for descending factors"}, row=2)
+    fig.update_yaxes({"range": [np.nanmax(increasing_factors) * 1.1, 0.9], "title": "Sensitivity for increasing factors"}, row=1)
+    fig.update_yaxes({"range": [0, 1.1], "title": "Sensitivity for decreasing factors"}, row=2)
     fig.update_xaxes({"title": "Metrics"}, row=2)
 
     # create hover text for the plot, disturbed ranking are sorted to make the comparison to the original ranking easier
