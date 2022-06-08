@@ -173,31 +173,43 @@ def rank_sensitivity_task(self, db_id: int) -> str:
     fig.update_yaxes({"range": [0, 1.1], "title": "Sensitivity for decreasing factors"}, row=2)
     fig.update_xaxes({"title": "Metrics"}, row=2)
 
+    sorted_decreasing_ranks = [list(sort_array_with_ranking(np.array(dr) + 1, original_ranking)) if len(dr) > 0 else None for dr in decreasing_ranks]
+    sorted_increasing_ranks = [list(sort_array_with_ranking(np.array(ir) + 1, original_ranking)) if len(ir) > 0 else None for
+        ir in increasing_ranks]
+
     # create hover text for the plot, disturbed ranking are sorted to make the comparison to the original ranking easier
-    decreasing_ranks_text = [str(sort_array_with_ranking(np.array(dr) + 1, original_ranking)) if len(dr) > 0 else "" for dr in decreasing_ranks]
-    increasing_ranks_text = [str(sort_array_with_ranking(np.array(ir) + 1, original_ranking)) if len(ir) > 0 else "" for ir in increasing_ranks]
+    decreasing_ranks_text = [str(ranks) for ranks in sorted_decreasing_ranks]
+    increasing_ranks_text = [str(ranks) for ranks in sorted_increasing_ranks]
 
     increasing_factors_insignificant = []
     increasing_factors_significant = []
 
     for i, inc_factors in enumerate(increasing_factors):
-        if check_if_significant_change(increasing_ranks[i]):
-            increasing_factors_significant.append(inc_factors)
+        if math.isnan(inc_factors):
+            increasing_factors_significant.append(float("nan"))
             increasing_factors_insignificant.append(float("nan"))
         else:
-            increasing_factors_significant.append(float("nan"))
-            increasing_factors_insignificant.append(inc_factors)
+            if check_if_significant_change(sorted_increasing_ranks[i]):
+                increasing_factors_significant.append(inc_factors)
+                increasing_factors_insignificant.append(float("nan"))
+            else:
+                increasing_factors_significant.append(float("nan"))
+                increasing_factors_insignificant.append(inc_factors)
 
     decreasing_factors_insignificant = []
     decreasing_factors_significant = []
 
     for i, dec_factors in enumerate(decreasing_factors):
-        if check_if_significant_change(decreasing_ranks[i]):
-            decreasing_factors_significant.append(dec_factors)
+        if math.isnan(dec_factors):
+            decreasing_factors_significant.append(float("nan"))
             decreasing_factors_insignificant.append(float("nan"))
         else:
-            decreasing_factors_significant.append(float("nan"))
-            decreasing_factors_insignificant.append(dec_factors)
+            if check_if_significant_change(sorted_decreasing_ranks[i]):
+                decreasing_factors_significant.append(dec_factors)
+                decreasing_factors_insignificant.append(float("nan"))
+            else:
+                decreasing_factors_significant.append(float("nan"))
+                decreasing_factors_insignificant.append(dec_factors)
 
     fig.add_trace(
         go.Scatter(x=metric_names, y=increasing_factors_insignificant, name="insignificant changes", mode="markers", marker={"symbol": "triangle-up", "size": 10, "color": "blue"}, hovertext=increasing_ranks_text),
