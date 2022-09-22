@@ -24,7 +24,7 @@ from .plugin import EsOptimizer
 PLUGIN_BLP = SecurityBlueprint( #SecurityBlueprint for eventual JWT support
     EsOptimizer.instance.identifier,  # blueprint name
     __name__,  # module import name!
-    description="An optimizer using an evolutionary strategy.",
+    description="ES-Optimizer plugin API.",
 )
 
 
