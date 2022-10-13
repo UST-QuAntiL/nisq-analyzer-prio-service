@@ -15,7 +15,8 @@ from qhana_plugin_runner.db.models.tasks import ProcessingTask
 from qhana_plugin_runner.storage import STORE
 from qhana_plugin_runner.tasks import save_task_result, save_task_error
 
-from ..api import PLUGIN_BLP, LearnRankingSchema
+from ..api import PLUGIN_BLP
+from ..schemas import LearnRankingSchema
 from ..plugin import EsOptimizer
 
 

@@ -16,7 +16,8 @@ from qhana_plugin_runner.db.models.tasks import ProcessingTask
 from qhana_plugin_runner.storage import STORE
 from qhana_plugin_runner.tasks import save_task_result, save_task_error
 
-from ..api import PLUGIN_BLP, RankSensitivitySchema
+from ..api import PLUGIN_BLP
+from ..schemas import RankSensitivitySchema
 from ..borda_count import borda_count_rank
 from ..plugin import EsOptimizer
 
