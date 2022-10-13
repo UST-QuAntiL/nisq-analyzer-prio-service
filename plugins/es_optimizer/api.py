@@ -1,11 +1,7 @@
 from http import HTTPStatus
-from typing import Any, Mapping, Optional, List, Dict, Tuple
 
 import marshmallow as ma
-from flask.wrappers import Response
-from flask.globals import request
 from flask.helpers import url_for
-from flask.templating import render_template
 from flask.views import MethodView
 from marshmallow import EXCLUDE
 
@@ -207,65 +203,3 @@ class PluginView(MethodView):
                 ],
             ),
         )
-
-
-# @PLUGIN_BLP.route("/ui/")
-# class MicroFrontend(MethodView):
-#     """Micro frontend for ES Optimizer."""
-#
-#     @PLUGIN_BLP.html_response(
-#         HTTPStatus.OK, description="Micro frontend of ES Optimizer."
-#     )
-#     @PLUGIN_BLP.arguments(
-#         EsOptimizerParametersSchema(
-#             # partial to allow partial inputs, validate as errors to get all validation errors
-#             # data is still stored in request.args
-#             partial=True, unknown=EXCLUDE, validate_errors_as_result=True
-#         ),
-#         location="query", # allow get submit via query parameters
-#         required=False, # micro frontend should just ignore most errors (but return error messages!)
-#     )
-#     @PLUGIN_BLP.require_jwt("jwt", optional=True)
-#     def get(self, errors):
-#         """Return the micro frontend."""
-#         return self.render(request.args, errors)
-#
-#     @PLUGIN_BLP.html_response(
-#         HTTPStatus.OK, description="Micro frontend of the hello world plugin."
-#     )
-#     @PLUGIN_BLP.arguments(
-#         EsOptimizerParametersSchema(
-#             # partial to allow partial inputs, validate as errors to get all validation errors
-#             # data is still stored in request.form
-#             partial=True, unknown=EXCLUDE, validate_errors_as_result=True
-#         ),
-#         location="form", # allow post submit of html form
-#         required=False, # micro frontend should just ignore most errors (but return error messages!)
-#     )
-#     @PLUGIN_BLP.require_jwt("jwt", optional=True)
-#     def post(self, errors):
-#         """Return the micro frontend with prerendered inputs."""
-#         return self.render(request.form, errors)
-#
-#     def render(self, data: Mapping, errors: dict):
-#         """Render the micro frontend from the html template.
-#
-#         Args:
-#             data (Mapping): The submitted data (may be incomplete!)
-#             errors (dict): Validation errors with the current submitted data
-#
-#         Returns:
-#             Response: the rendered template with the submitted data prefilled and errors
-#         """
-#         schema = EsOptimizerParametersSchema()
-#         return Response(
-#             render_template(
-#                 "simple_template.html",
-#                 name=EsOptimizer.instance.name,
-#                 version=EsOptimizer.instance.version,
-#                 schema=schema, #schema is used to create the html form
-#                 values=data, # data is used to prefill values in the form
-#                 errors=errors, # errors is used to show error texts in the form
-#                 process=url_for(f"{PLUGIN_BLP.name}.ProcessView"), # the endpoint starting the background task
-#             )
-#         )
