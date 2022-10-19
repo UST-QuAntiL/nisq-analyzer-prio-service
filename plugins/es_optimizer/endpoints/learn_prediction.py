@@ -108,15 +108,23 @@ def _preprocess_data(task_parameters: LearnPrediction):
     training_target = pd.DataFrame(training_target_dict)
 
     new_circuit_data = task_parameters.new_circuit.original_circuit_and_qpu_metrics[0]
+    new_compiler = new_circuit_data[task_parameters.compiler_property_name]
+    del new_circuit_data[task_parameters.compiler_property_name]
+    new_compiler_encoded: np.ndarray = compiler_encoder.transform(np.array([new_compiler]).reshape(-1, 1))
+
+    for i in range(new_compiler_encoded.shape[1]):
+        new_circuit_data[f"compiler_{i}"] = new_compiler_encoded[:, i]
+
     new_input = pd.DataFrame(new_circuit_data)
+    new_input = new_input[training_input.columns]  # return only the needed columns and in the right order
 
     return training_input, training_target, new_input, compiler_encoder
 
 
 @CELERY.task(name=f"{EsOptimizer.instance.identifier}.prediction_task", bind=True)
 def prediction_task(self, db_id: int) -> str:
-    # import pydevd_pycharm
-    # pydevd_pycharm.settrace('localhost', port=3857, stdoutToServer=True, stderrToServer=True)
+    import pydevd_pycharm
+    pydevd_pycharm.settrace('localhost', port=3857, stdoutToServer=True, stderrToServer=True)
     from sklearn.pipeline import make_pipeline
     from sklearn.preprocessing import StandardScaler
     from sklearn.ensemble import ExtraTreesRegressor, GradientBoostingRegressor, RandomForestRegressor
@@ -148,6 +156,8 @@ def prediction_task(self, db_id: int) -> str:
         raise NotImplementedError
 
     model.fit(training_input, training_target)
+
+    prediction = model.predict(new_input)
 
     with SpooledTemporaryFile(mode="wt") as output_file:
         predicted_histogram_intersections = {}
