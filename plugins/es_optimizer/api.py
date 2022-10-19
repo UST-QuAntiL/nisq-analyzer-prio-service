@@ -46,7 +46,7 @@ class PluginView(MethodView):
                 # entry point for headless (non-gui) applications
                 href=url_for(f"{PLUGIN_BLP.name}.ProcessView"),
                 # micro frontend entry point
-                ui_href=url_for(f"{PLUGIN_BLP.name}.MicroFrontend"),
+                ui_href="",
                 # definition of (required) input data
                 data_input=[],
                 # definition of output data
