@@ -15,7 +15,8 @@ from qhana_plugin_runner.storage import STORE
 from qhana_plugin_runner.tasks import save_task_result, save_task_error
 
 from ..api import PLUGIN_BLP
-from ..schemas import LearnPredictionSchema, LearnPrediction, MachineLearningMethod
+from ..schemas import LearnPredictionSchema, LearnPrediction, MachineLearningMethod, PredictionResult, \
+    PredictionResultSchema
 from ..plugin import EsOptimizer
 
 
@@ -65,35 +66,41 @@ class PredictionView(MethodView):
 TASK_LOGGER = get_task_logger(__name__)
 
 
-def _preprocess_data(task_parameters: LearnPrediction):
-    import pandas as pd
+def _convert_compilers_to_one_hot_encoding(data, task_parameters: LearnPrediction, encoder=None):
     from sklearn.preprocessing import OneHotEncoder
     import numpy as np
 
-    training_input_dict = {}
+    compiler_data = data[task_parameters.compiler_property_name].to_numpy().reshape((-1, 1))
 
-    for name in task_parameters.input_metric_names:
-        metric_data = []
+    if encoder is None:
+        encoder = OneHotEncoder(sparse=False)
+        compilers_encoded: np.ndarray = encoder.fit_transform(compiler_data)
+    else:
+        compilers_encoded: np.ndarray = encoder.transform(compiler_data)
 
-        for circuits in task_parameters.training_data:
-            for circuit in circuits.original_circuit_and_qpu_metrics:
-                metric_data.append(circuit[name])
+    del data[task_parameters.compiler_property_name]
+    column_names = []
 
-        training_input_dict[name] = metric_data
+    for i in range(compilers_encoded.shape[1]):
+        data.insert(i, f"compiler_{i}", compilers_encoded[:, i])
+        column_names.append(f"compiler_{i}")
 
-    compiler_data = []
+    return encoder, column_names
+
+
+def _preprocess_data(task_parameters: LearnPrediction):
+    import pandas as pd
+
+    circuit_data = []
 
     for circuits in task_parameters.training_data:
         for circuit in circuits.original_circuit_and_qpu_metrics:
-            compiler_data.append(circuit[task_parameters.compiler_property_name])
+            circuit_data.append(pd.DataFrame(circuit, index=[0]))
 
-    compiler_encoder = OneHotEncoder(sparse=False)
-    compilers_encoded: np.ndarray = compiler_encoder.fit_transform(np.array(compiler_data).reshape(-1, 1))
+    training_data = pd.concat(circuit_data, axis=0, ignore_index=True)
+    compiler_encoder, compiler_column_names = _convert_compilers_to_one_hot_encoding(training_data, task_parameters)
 
-    for i in range(compilers_encoded.shape[1]):
-        training_input_dict[f"compiler_{i}"] = compilers_encoded[:, i]
-
-    training_input = pd.DataFrame(training_input_dict)
+    training_input = training_data[task_parameters.input_metric_names + compiler_column_names]
 
     target_values = []
 
@@ -107,27 +114,27 @@ def _preprocess_data(task_parameters: LearnPrediction):
 
     training_target = pd.DataFrame(training_target_dict)
 
-    new_circuit_data = task_parameters.new_circuit.original_circuit_and_qpu_metrics[0]
-    new_compiler = new_circuit_data[task_parameters.compiler_property_name]
-    del new_circuit_data[task_parameters.compiler_property_name]
-    new_compiler_encoded: np.ndarray = compiler_encoder.transform(np.array([new_compiler]).reshape(-1, 1))
+    new_circuit_data = []
 
-    for i in range(new_compiler_encoded.shape[1]):
-        new_circuit_data[f"compiler_{i}"] = new_compiler_encoded[:, i]
+    for circuit in task_parameters.new_circuit.original_circuit_and_qpu_metrics:
+        new_circuit_data.append(pd.DataFrame(circuit, index=[0]))
 
-    new_input = pd.DataFrame(new_circuit_data)
-    new_input = new_input[training_input.columns]  # return only the needed columns and in the right order
+    new_input = pd.concat(new_circuit_data, axis=0, ignore_index=True)
+    _convert_compilers_to_one_hot_encoding(new_input, task_parameters, compiler_encoder)
+    new_input = new_input[task_parameters.input_metric_names + compiler_column_names]
 
     return training_input, training_target, new_input, compiler_encoder
 
 
 @CELERY.task(name=f"{EsOptimizer.instance.identifier}.prediction_task", bind=True)
 def prediction_task(self, db_id: int) -> str:
-    import pydevd_pycharm
-    pydevd_pycharm.settrace('localhost', port=3857, stdoutToServer=True, stderrToServer=True)
+    # import pydevd_pycharm
+    # pydevd_pycharm.settrace('localhost', port=3857, stdoutToServer=True, stderrToServer=True)
+
     from sklearn.pipeline import make_pipeline
     from sklearn.preprocessing import StandardScaler
     from sklearn.ensemble import ExtraTreesRegressor, GradientBoostingRegressor, RandomForestRegressor
+    import numpy as np
 
     """The background task that trains a machine learning model to predict histogram intersections."""
     TASK_LOGGER.info(f"Starting new background task for plugin ES Optimizer with db id '{db_id}'")
@@ -157,16 +164,23 @@ def prediction_task(self, db_id: int) -> str:
 
     model.fit(training_input, training_target)
 
-    prediction = model.predict(new_input)
+    prediction: np.ndarray = model.predict(new_input)
+    predictions_with_ids = {}
+
+    for i, p in enumerate(prediction):
+        circuit_id = task_parameters.new_circuit.original_circuit_and_qpu_metrics[i]["id"]
+        predictions_with_ids[circuit_id] = p
+
+    result = PredictionResult(predictions_with_ids, [], [])
 
     with SpooledTemporaryFile(mode="wt") as output_file:
-        predicted_histogram_intersections = {}
+        schema = PredictionResultSchema()
+        serialized = schema.dumps(result)
+        output_file.write(serialized)
+        output_file.flush()
 
-        # TODO: add predicted histogram intersections to dictionary
-
-        json.dump(predicted_histogram_intersections, output_file)
         STORE.persist_task_result(
-            db_id, output_file, "weights.json", "text", "application/json"
+            db_id, output_file, "predictions.json", "text", "application/json"
         )
 
     return "finished"

@@ -253,16 +253,19 @@ class PredictionResultSchema(FrontendFormBaseSchema):
     class Meta:
         unknown = EXCLUDE
 
-    predicted_histogram_intersections: ma.fields.Dict(
+    predicted_histogram_intersections = ma.fields.Dict(
         keys=ma.fields.String(),
         values=ma.fields.Float(),
         required=True,
         allow_none=False
     )
-    original_circuit_and_qpu_metrics = ma.fields.List(
-        ma.fields.Dict(
-            keys=ma.fields.String()
-        ),
+    ranking = ma.fields.List(
+        ma.fields.String(),
+        required=True,
+        allow_none=False
+    )
+    borda_count_ranking = ma.fields.List(
+        ma.fields.String(),
         required=True,
         allow_none=False
     )
