@@ -120,21 +120,25 @@ def _preprocess_data(task_parameters: LearnPrediction):
         new_circuit_data.append(pd.DataFrame(circuit, index=[0]))
 
     new_input = pd.concat(new_circuit_data, axis=0, ignore_index=True)
+
+    new_ids = new_input["id"]
+
     _convert_compilers_to_one_hot_encoding(new_input, task_parameters, compiler_encoder)
     new_input = new_input[task_parameters.input_metric_names + compiler_column_names]
 
-    return training_input, training_target, new_input, compiler_encoder
+    return training_input, training_target, new_input, new_ids, compiler_encoder
 
 
 @CELERY.task(name=f"{EsOptimizer.instance.identifier}.prediction_task", bind=True)
 def prediction_task(self, db_id: int) -> str:
-    # import pydevd_pycharm
-    # pydevd_pycharm.settrace('localhost', port=3857, stdoutToServer=True, stderrToServer=True)
+    import pydevd_pycharm
+    pydevd_pycharm.settrace('localhost', port=3857, stdoutToServer=True, stderrToServer=True)
 
     from sklearn.pipeline import make_pipeline
     from sklearn.preprocessing import StandardScaler
     from sklearn.ensemble import ExtraTreesRegressor, GradientBoostingRegressor, RandomForestRegressor
     import numpy as np
+    import pandas as pd
 
     """The background task that trains a machine learning model to predict histogram intersections."""
     TASK_LOGGER.info(f"Starting new background task for plugin ES Optimizer with db id '{db_id}'")
@@ -151,7 +155,7 @@ def prediction_task(self, db_id: int) -> str:
     schema = LearnPredictionSchema()
     task_parameters: LearnPrediction = schema.loads(task_data.parameters)
 
-    training_input, training_target, new_input, compiler_encoder = _preprocess_data(task_parameters)
+    training_input, training_target, new_input, new_ids, compiler_encoder = _preprocess_data(task_parameters)
 
     if task_parameters.machine_learning_method == MachineLearningMethod.extra_trees_regressor:
         model = make_pipeline(StandardScaler(), ExtraTreesRegressor())
@@ -165,13 +169,21 @@ def prediction_task(self, db_id: int) -> str:
     model.fit(training_input, training_target)
 
     prediction: np.ndarray = model.predict(new_input)
+
+    prediction_with_ids_dataframe = pd.DataFrame(
+        {
+            "id": new_ids,
+            "prediction": prediction
+        }
+    )
+    prediction_with_ids_dataframe.sort_values("prediction", ascending=False, inplace=True)
+
     predictions_with_ids = {}
 
-    for i, p in enumerate(prediction):
-        circuit_id = task_parameters.new_circuit.original_circuit_and_qpu_metrics[i]["id"]
-        predictions_with_ids[circuit_id] = p
+    for _, circuit in prediction_with_ids_dataframe.iterrows():
+        predictions_with_ids[circuit["id"]] = circuit["prediction"]
 
-    result = PredictionResult(predictions_with_ids, [], [])
+    result = PredictionResult(predictions_with_ids, list(prediction_with_ids_dataframe["id"]), [])
 
     with SpooledTemporaryFile(mode="wt") as output_file:
         schema = PredictionResultSchema()
