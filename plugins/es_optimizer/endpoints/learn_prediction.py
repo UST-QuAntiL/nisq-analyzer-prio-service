@@ -1,4 +1,3 @@
-import json
 from datetime import datetime
 from http import HTTPStatus
 from tempfile import SpooledTemporaryFile
@@ -15,9 +14,11 @@ from qhana_plugin_runner.storage import STORE
 from qhana_plugin_runner.tasks import save_task_result, save_task_error
 
 from ..api import PLUGIN_BLP
+from ..borda_count import borda_count_rank
 from ..schemas import LearnPredictionSchema, LearnPrediction, MachineLearningMethod, PredictionResult, \
     PredictionResultSchema
 from ..plugin import EsOptimizer
+from ..tools.ranking import convert_scores_to_ranking, sort_array_with_ranking
 
 
 @PLUGIN_BLP.route("/prediction")
@@ -122,18 +123,27 @@ def _preprocess_data(task_parameters: LearnPrediction):
     new_input = pd.concat(new_circuit_data, axis=0, ignore_index=True)
 
     new_ids = new_input["id"]
+    new_queue_sizes = new_input[task_parameters.queue_size_name]
 
     _convert_compilers_to_one_hot_encoding(new_input, task_parameters, compiler_encoder)
     new_input = new_input[task_parameters.input_metric_names + compiler_column_names]
 
-    return training_input, training_target, new_input, new_ids, compiler_encoder
+    return training_input, training_target, new_input, new_ids, new_queue_sizes, compiler_encoder
+
+
+def _calculate_borda_rank(task_parameters: LearnPrediction, prediction_and_metadata):
+    queue_rank = convert_scores_to_ranking(prediction_and_metadata["queue_size"].to_numpy(), False)
+    prediction_rank = convert_scores_to_ranking(prediction_and_metadata["prediction"].to_numpy(), True)
+
+    combined_rank = borda_count_rank(
+        [prediction_rank, queue_rank],
+        [1.0 - task_parameters.queue_size_importance, task_parameters.queue_size_importance])
+
+    return combined_rank
 
 
 @CELERY.task(name=f"{EsOptimizer.instance.identifier}.prediction_task", bind=True)
 def prediction_task(self, db_id: int) -> str:
-    import pydevd_pycharm
-    pydevd_pycharm.settrace('localhost', port=3857, stdoutToServer=True, stderrToServer=True)
-
     from sklearn.pipeline import make_pipeline
     from sklearn.preprocessing import StandardScaler
     from sklearn.ensemble import ExtraTreesRegressor, GradientBoostingRegressor, RandomForestRegressor
@@ -155,7 +165,7 @@ def prediction_task(self, db_id: int) -> str:
     schema = LearnPredictionSchema()
     task_parameters: LearnPrediction = schema.loads(task_data.parameters)
 
-    training_input, training_target, new_input, new_ids, compiler_encoder = _preprocess_data(task_parameters)
+    training_input, training_target, new_input, new_ids, new_queue_sizes, compiler_encoder = _preprocess_data(task_parameters)
 
     if task_parameters.machine_learning_method == MachineLearningMethod.extra_trees_regressor:
         model = make_pipeline(StandardScaler(), ExtraTreesRegressor())
@@ -170,20 +180,24 @@ def prediction_task(self, db_id: int) -> str:
 
     prediction: np.ndarray = model.predict(new_input)
 
-    prediction_with_ids_dataframe = pd.DataFrame(
+    prediction_and_metadata = pd.DataFrame(
         {
             "id": new_ids,
-            "prediction": prediction
+            "prediction": prediction,
+            "queue_size": new_queue_sizes
         }
     )
-    prediction_with_ids_dataframe.sort_values("prediction", ascending=False, inplace=True)
+    prediction_and_metadata.sort_values("prediction", ascending=False, inplace=True)
 
     predictions_with_ids = {}
 
-    for _, circuit in prediction_with_ids_dataframe.iterrows():
+    for _, circuit in prediction_and_metadata.iterrows():
         predictions_with_ids[circuit["id"]] = circuit["prediction"]
 
-    result = PredictionResult(predictions_with_ids, list(prediction_with_ids_dataframe["id"]), [])
+    combined_rank = _calculate_borda_rank(task_parameters, prediction_and_metadata)
+    ids_combined_sorted = sort_array_with_ranking(prediction_and_metadata["id"].to_numpy(), combined_rank)
+
+    result = PredictionResult(predictions_with_ids, list(prediction_and_metadata["id"]), list(ids_combined_sorted))
 
     with SpooledTemporaryFile(mode="wt") as output_file:
         schema = PredictionResultSchema()

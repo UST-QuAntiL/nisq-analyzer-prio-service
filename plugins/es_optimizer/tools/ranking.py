@@ -42,7 +42,11 @@ def _test_mcda_ranking():
 
 if __name__ == "__main__":
     # _test_mcda_ranking()
-    original_ranking = np.array([1, 0, 3, 2])
-    disturbed_ranking = np.array([3, 0, 1, 2])
 
-    print(sort_array_with_ranking(disturbed_ranking, original_ranking))
+    # original_ranking = np.array([1, 0, 3, 2])
+    # disturbed_ranking = np.array([3, 0, 1, 2])
+    # print(sort_array_with_ranking(disturbed_ranking, original_ranking))
+
+    scores = np.array([0.9, 0.7, 0.8])
+    rank = convert_scores_to_ranking(scores, True)
+    print(sort_array_with_ranking(scores, rank))
