@@ -128,7 +128,7 @@ def rank_sensitivity_task(self, db_id: int) -> str:
         "original_ranking": original_ranking.tolist()
     }
 
-    rankings_for_borda = get_rankings_for_borda_count(task_parameters, 0)
+    rankings_for_borda, _ = get_rankings_for_borda_count(task_parameters, 0)
 
     if len(rankings_for_borda) > 0:
         borda_rank = borda_count_rank([original_ranking] + rankings_for_borda)
