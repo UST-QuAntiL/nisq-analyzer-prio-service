@@ -124,7 +124,7 @@ def rank_task(self, db_id: int) -> str:
     if "borda_count_weights" in task_parameters and task_parameters["borda_count_weights"] is not None:
         borda_count_weights = []
 
-        for name in ["mcda"] + borda_metric_names:
+        for name in ["result_precision"] + borda_metric_names:
             borda_count_weights.append(task_parameters["borda_count_weights"][name])
 
     if len(rankings_for_borda) > 0:
