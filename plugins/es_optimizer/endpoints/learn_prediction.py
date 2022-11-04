@@ -12,7 +12,7 @@ from qhana_plugin_runner.celery import CELERY
 from qhana_plugin_runner.db.models.tasks import ProcessingTask
 from qhana_plugin_runner.storage import STORE
 from qhana_plugin_runner.tasks import save_task_result, save_task_error
-from sklearn.ensemble import HistGradientBoostingRegressor
+from sklearn.ensemble import HistGradientBoostingRegressor, BaggingRegressor, AdaBoostRegressor
 from sklearn.linear_model import TheilSenRegressor
 from sklearn.neighbors import KNeighborsRegressor
 from sklearn.svm import NuSVR
@@ -21,7 +21,7 @@ from sklearn.tree import DecisionTreeRegressor
 from ..api import PLUGIN_BLP
 from ..borda_count import borda_count_rank
 from ..schemas import LearnPredictionSchema, LearnPrediction, MachineLearningMethod, PredictionResult, \
-    PredictionResultSchema
+    PredictionResultSchema, MetaRegressor
 from ..plugin import EsOptimizer
 from ..tools.ranking import convert_scores_to_ranking, sort_array_with_ranking
 
@@ -173,26 +173,31 @@ def prediction_task(self, db_id: int) -> str:
     training_input, training_target, new_input, new_ids, new_queue_sizes, compiler_encoder = _preprocess_data(task_parameters)
 
     if task_parameters.machine_learning_method == MachineLearningMethod.extra_trees_regressor:
-        model = make_pipeline(StandardScaler(), ExtraTreesRegressor())
+        regressor = ExtraTreesRegressor()
     elif task_parameters.machine_learning_method == MachineLearningMethod.random_forest_regressor:
-        model = make_pipeline(StandardScaler(), RandomForestRegressor())
+        regressor = RandomForestRegressor()
     elif task_parameters.machine_learning_method == MachineLearningMethod.gradient_boosting_regressor:
-        model = make_pipeline(StandardScaler(), GradientBoostingRegressor())
+        regressor = GradientBoostingRegressor()
     elif task_parameters.machine_learning_method == MachineLearningMethod.decision_tree_regressor:
-        model = make_pipeline(StandardScaler(), DecisionTreeRegressor())
+        regressor = DecisionTreeRegressor()
     elif task_parameters.machine_learning_method == MachineLearningMethod.hist_gradient_boosting_regressor:
-        model = make_pipeline(StandardScaler(), HistGradientBoostingRegressor())
+        regressor = HistGradientBoostingRegressor()
     elif task_parameters.machine_learning_method == MachineLearningMethod.nu_svr:
-        model = make_pipeline(StandardScaler(), NuSVR())
+        regressor = NuSVR()
     elif task_parameters.machine_learning_method == MachineLearningMethod.k_neighbors_regressor:
-        model = make_pipeline(StandardScaler(), KNeighborsRegressor())
+        regressor = KNeighborsRegressor()
     elif task_parameters.machine_learning_method == MachineLearningMethod.theil_sen_regressor:
-        model = make_pipeline(StandardScaler(), TheilSenRegressor())
+        regressor = TheilSenRegressor()
     else:
         raise NotImplementedError
 
-    model.fit(training_input, training_target)
+    if task_parameters.meta_regressor == MetaRegressor.bagging_regressor:
+        regressor = BaggingRegressor(regressor)
+    elif task_parameters.meta_regressor == MetaRegressor.ada_boost_regressor:
+        regressor = AdaBoostRegressor(regressor)
 
+    model = make_pipeline(StandardScaler(), regressor)
+    model.fit(training_input, training_target)
     prediction: np.ndarray = model.predict(new_input)
 
     prediction_and_metadata = pd.DataFrame(

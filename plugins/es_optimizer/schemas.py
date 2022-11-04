@@ -166,6 +166,12 @@ class MachineLearningMethod(Enum):
     theil_sen_regressor = "theil_sen_regressor"
 
 
+class MetaRegressor(Enum):
+    none = "none"
+    bagging_regressor = "bagging_regressor"
+    ada_boost_regressor = "ada_boost_regressor"
+
+
 @dataclass
 class OriginalCircuit:
     id: str
@@ -196,6 +202,7 @@ class OriginalCircuitSchema(FrontendFormBaseSchema):
 @dataclass
 class LearnPrediction:
     machine_learning_method: MachineLearningMethod
+    meta_regressor: MetaRegressor
     training_data: List[OriginalCircuit]
     new_circuit: OriginalCircuit
     input_metric_names: List[str]
@@ -211,6 +218,11 @@ class LearnPredictionSchema(FrontendFormBaseSchema):
 
     machine_learning_method = ma.fields.Enum(
         MachineLearningMethod,
+        required=True,
+        allow_none=False
+    )
+    meta_regressor = ma.fields.Enum(
+        MetaRegressor,
         required=True,
         allow_none=False
     )
