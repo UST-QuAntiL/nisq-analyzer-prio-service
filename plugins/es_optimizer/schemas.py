@@ -159,6 +159,11 @@ class MachineLearningMethod(Enum):
     extra_trees_regressor = "extra_trees_regressor"
     gradient_boosting_regressor = "gradient_boosting_regressor"
     random_forest_regressor = "random_forest_regressor"
+    decision_tree_regressor = "decision_tree_regressor"
+    hist_gradient_boosting_regressor = "hist_gradient_boosting_regressor"
+    nu_svr = "nu_svr"
+    k_neighbors_regressor = "k_neighbors_regressor"
+    theil_sen_regressor = "theil_sen_regressor"
 
 
 @dataclass

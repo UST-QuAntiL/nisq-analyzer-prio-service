@@ -12,6 +12,11 @@ from qhana_plugin_runner.celery import CELERY
 from qhana_plugin_runner.db.models.tasks import ProcessingTask
 from qhana_plugin_runner.storage import STORE
 from qhana_plugin_runner.tasks import save_task_result, save_task_error
+from sklearn.ensemble import HistGradientBoostingRegressor
+from sklearn.linear_model import TheilSenRegressor
+from sklearn.neighbors import KNeighborsRegressor
+from sklearn.svm import NuSVR
+from sklearn.tree import DecisionTreeRegressor
 
 from ..api import PLUGIN_BLP
 from ..borda_count import borda_count_rank
@@ -173,6 +178,16 @@ def prediction_task(self, db_id: int) -> str:
         model = make_pipeline(StandardScaler(), RandomForestRegressor())
     elif task_parameters.machine_learning_method == MachineLearningMethod.gradient_boosting_regressor:
         model = make_pipeline(StandardScaler(), GradientBoostingRegressor())
+    elif task_parameters.machine_learning_method == MachineLearningMethod.decision_tree_regressor:
+        model = make_pipeline(StandardScaler(), DecisionTreeRegressor())
+    elif task_parameters.machine_learning_method == MachineLearningMethod.hist_gradient_boosting_regressor:
+        model = make_pipeline(StandardScaler(), HistGradientBoostingRegressor())
+    elif task_parameters.machine_learning_method == MachineLearningMethod.nu_svr:
+        model = make_pipeline(StandardScaler(), NuSVR())
+    elif task_parameters.machine_learning_method == MachineLearningMethod.k_neighbors_regressor:
+        model = make_pipeline(StandardScaler(), KNeighborsRegressor())
+    elif task_parameters.machine_learning_method == MachineLearningMethod.theil_sen_regressor:
+        model = make_pipeline(StandardScaler(), TheilSenRegressor())
     else:
         raise NotImplementedError
 
