@@ -216,16 +216,19 @@ class LearnPredictionSchema(FrontendFormBaseSchema):
     class Meta:
         unknown = EXCLUDE
 
-    machine_learning_method = ma.fields.Enum(
-        MachineLearningMethod,
-        required=True,
-        allow_none=False
-    )
-    meta_regressor = ma.fields.Enum(
-        MetaRegressor,
-        required=True,
-        allow_none=False
-    )
+    try:  # FIXME this is a hotfix, remove when marshmallow was updated in the plugin runner
+        machine_learning_method = ma.fields.Enum(
+            MachineLearningMethod,
+            required=True,
+            allow_none=False
+        )
+        meta_regressor = ma.fields.Enum(
+            MetaRegressor,
+            required=True,
+            allow_none=False
+        )
+    except:
+        pass
     training_data = ma.fields.List(
         ma.fields.Nested(OriginalCircuitSchema()),
         required=True,

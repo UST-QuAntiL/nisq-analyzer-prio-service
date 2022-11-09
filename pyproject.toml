@@ -9,6 +9,7 @@ readme = "README.md"
 [tool.poetry.dependencies]
 python = "^3.7"
 qhana_plugin_runner = { git= "https://github.com/UST-QuAntiL/qhana-plugin-runner.git", branch= "main" }
+marshmallow = "^3.13.0"
 
 [tool.poetry.dev-dependencies]
 black = "^21.5b1"
