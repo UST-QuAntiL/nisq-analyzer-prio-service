@@ -128,10 +128,18 @@ def rank_sensitivity_task(self, db_id: int) -> str:
         "original_ranking": original_ranking.tolist()
     }
 
-    rankings_for_borda, _ = get_rankings_for_borda_count(task_parameters, 0)
+    rankings_for_borda, borda_metric_names = get_rankings_for_borda_count(task_parameters, 0)
+
+    borda_count_weights: Optional[List[float]] = None
+
+    if "borda_count_weights" in task_parameters and task_parameters["borda_count_weights"] is not None:
+        borda_count_weights = []
+
+        for name in ["result_precision"] + borda_metric_names:
+            borda_count_weights.append(task_parameters["borda_count_weights"][name])
 
     if len(rankings_for_borda) > 0:
-        borda_rank = borda_count_rank([original_ranking] + rankings_for_borda)
+        borda_rank = borda_count_rank([original_ranking] + rankings_for_borda, borda_count_weights)
 
         output_data["original_borda_count_ranking"] = borda_rank.tolist()
 
@@ -140,7 +148,7 @@ def rank_sensitivity_task(self, db_id: int) -> str:
     else:
         rankings_for_borda = None
 
-    decreasing_factors, decreasing_ranks, decreasing_borda_ranks, increasing_factors, increasing_ranks, increasing_borda_ranks = find_changing_factors(mcda, [metrics], is_cost, NormalizedWeights(weights), rankings_for_borda, step_size, upper_bound, lower_bound)
+    decreasing_factors, decreasing_ranks, decreasing_borda_ranks, increasing_factors, increasing_ranks, increasing_borda_ranks = find_changing_factors(mcda, [metrics], is_cost, NormalizedWeights(weights), rankings_for_borda, borda_count_weights, step_size, upper_bound, lower_bound)
 
     # remove unused dimension
     decreasing_ranks: list[list[int]] = [dr[0] if len(dr) > 0 else [] for dr in decreasing_ranks]

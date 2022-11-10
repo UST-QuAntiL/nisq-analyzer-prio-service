@@ -1,5 +1,5 @@
 import math
-from typing import List, Tuple
+from typing import List, Tuple, Optional
 
 import numpy as np
 from pymcdm.methods.mcda_method import MCDA_method
@@ -10,7 +10,7 @@ from .tools.ranking import create_mcda_ranking
 from .weights import NormalizedWeights
 
 
-def calculate_average_spearman(mcda: MCDA_method, metrics: List[np.ndarray], is_cost: np.ndarray, original_weights: NormalizedWeights, disturbed_weights: NormalizedWeights, rankings_for_borda: List[List[np.ndarray]] = None) -> float:
+def calculate_average_spearman(mcda: MCDA_method, metrics: List[np.ndarray], is_cost: np.ndarray, original_weights: NormalizedWeights, disturbed_weights: NormalizedWeights, rankings_for_borda: List[List[np.ndarray]] = None, borda_count_weights: Optional[List[float]] = None) -> float:
     average_spearman = 0
 
     for i, m in enumerate(metrics):
@@ -18,8 +18,8 @@ def calculate_average_spearman(mcda: MCDA_method, metrics: List[np.ndarray], is_
         disturbed_ranking = create_mcda_ranking(mcda, m, disturbed_weights, is_cost)
 
         if rankings_for_borda is not None and len(rankings_for_borda) > 0:
-            original_ranking = borda_count_rank([original_ranking] + rankings_for_borda[i])
-            disturbed_ranking = borda_count_rank([disturbed_ranking] + rankings_for_borda[i])
+            original_ranking = borda_count_rank([original_ranking] + rankings_for_borda[i], borda_count_weights)
+            disturbed_ranking = borda_count_rank([disturbed_ranking] + rankings_for_borda[i], borda_count_weights)
 
         spearman = rank_correlation.spearman(original_ranking, disturbed_ranking)
         average_spearman += spearman
@@ -29,7 +29,7 @@ def calculate_average_spearman(mcda: MCDA_method, metrics: List[np.ndarray], is_
     return average_spearman
 
 
-def find_changing_factors(mcda: MCDA_method, metrics: List[np.ndarray], is_cost: np.ndarray, original_weights: NormalizedWeights, rankings_for_borda: List[List[np.ndarray]] = None, step_size: float = 0.01, upper_bound: float = 145, lower_bound: float = 0.00657) -> Tuple[List[float], List[List[List[int]]], List[List[List[int]]], List[float], List[List[List[int]]], List[List[List[int]]]]:
+def find_changing_factors(mcda: MCDA_method, metrics: List[np.ndarray], is_cost: np.ndarray, original_weights: NormalizedWeights, rankings_for_borda: List[List[np.ndarray]] = None, borda_count_weights: Optional[List[float]] = None, step_size: float = 0.01, upper_bound: float = 145, lower_bound: float = 0.00657) -> Tuple[List[float], List[List[List[int]]], List[List[List[int]]], List[float], List[List[List[int]]], List[List[List[int]]]]:
     def find_factors(factor_adjustment: float, iterations: int) -> Tuple[List[float], List[List[List[int]]], List[List[List[int]]]]:
         changing_factors = []
         changed_rankings = []
@@ -57,7 +57,7 @@ def find_changing_factors(mcda: MCDA_method, metrics: List[np.ndarray], is_cost:
                         changed_ranking.append(disturbed_ranking.tolist())
 
                         if rankings_for_borda is not None and len(rankings_for_borda) > 0:
-                            borda_rank = borda_count_rank([disturbed_ranking] + rankings_for_borda[k])
+                            borda_rank = borda_count_rank([disturbed_ranking] + rankings_for_borda[k], borda_count_weights)
                             changed_borda_ranking.append(borda_rank.tolist())
 
                     break

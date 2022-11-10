@@ -148,6 +148,12 @@ class RankSensitivitySchema(FrontendFormBaseSchema):
         required=True,
         allow_none=False
     )
+    borda_count_weights = ma.fields.Dict(
+        keys=ma.fields.String(),
+        values=ma.fields.Float(),
+        required=False,
+        allow_none=True
+    )
     circuits = ma.fields.List(
         ma.fields.Nested(CircuitSchema()),
         required=True,
