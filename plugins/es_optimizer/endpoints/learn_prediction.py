@@ -1,10 +1,8 @@
-import json
 from datetime import datetime
 from http import HTTPStatus
 from tempfile import SpooledTemporaryFile
 from typing import Optional
 
-import flask
 from celery import chain
 from celery.utils.log import get_task_logger
 from flask import redirect, url_for
@@ -39,12 +37,6 @@ class PredictionView(MethodView):
         """Start the background task."""
         # create a new task instance in DB with the relevant parameters
         schema = LearnPredictionSchema()
-        print("received prediction request", flush=True)
-        print("url:", flask.request.url, flush=True)
-        print("endpoint:", flask.request.endpoint, flush=True)
-        print("content length:", flask.request.content_length, flush=True)
-        print("mimetype:", flask.request.mimetype, flush=True)
-        print("request content:", flask.request.get_data(as_text=True), flush=True)
         db_task = ProcessingTask(task_name=prediction_task.name, parameters=schema.dumps(arguments))
         db_task.save(commit=True)
 
