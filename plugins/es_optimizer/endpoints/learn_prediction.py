@@ -1,3 +1,4 @@
+import json
 from datetime import datetime
 from http import HTTPStatus
 from tempfile import SpooledTemporaryFile
@@ -37,6 +38,8 @@ class PredictionView(MethodView):
         """Start the background task."""
         # create a new task instance in DB with the relevant parameters
         schema = LearnPredictionSchema()
+        print("recieved prediction request")
+        print(schema.dumps(arguments))
         db_task = ProcessingTask(task_name=prediction_task.name, parameters=schema.dumps(arguments))
         db_task.save(commit=True)
 
