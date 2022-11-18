@@ -39,7 +39,12 @@ class PredictionView(MethodView):
         """Start the background task."""
         # create a new task instance in DB with the relevant parameters
         schema = LearnPredictionSchema()
-        print("received prediction request: ", flask.request.get_data(as_text=True)[0:100])
+        print("received prediction request")
+        print("url:", flask.request.url)
+        print("endpoint:", flask.request.endpoint)
+        print("content length:", flask.request.content_length)
+        print("mimetype:", flask.request.mimetype)
+        print("truncated request:", flask.request.get_data(as_text=True)[0:100])
         db_task = ProcessingTask(task_name=prediction_task.name, parameters=schema.dumps(arguments))
         db_task.save(commit=True)
 
