@@ -3,7 +3,7 @@ from datetime import datetime
 from http import HTTPStatus
 from json import dumps, loads
 from tempfile import SpooledTemporaryFile
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, List
 
 from celery import chain
 from celery.utils.log import get_task_logger
@@ -15,7 +15,8 @@ from qhana_plugin_runner.db.models.tasks import ProcessingTask
 from qhana_plugin_runner.storage import STORE
 from qhana_plugin_runner.tasks import save_task_result, save_task_error
 
-from ..api import PLUGIN_BLP, RankSchema
+from ..api import PLUGIN_BLP
+from ..schemas import RankSchema
 from ..plugin import EsOptimizer
 
 
@@ -116,10 +117,18 @@ def rank_task(self, db_id: int) -> str:
 
     output_data["ranking"] = list(sorted_ids)
 
-    rankings_for_borda = get_rankings_for_borda_count(task_parameters, 0)
+    rankings_for_borda, borda_metric_names = get_rankings_for_borda_count(task_parameters, 0)
+
+    borda_count_weights: Optional[List[float]] = None
+
+    if "borda_count_weights" in task_parameters and task_parameters["borda_count_weights"] is not None:
+        borda_count_weights = []
+
+        for name in ["result_precision"] + borda_metric_names:
+            borda_count_weights.append(task_parameters["borda_count_weights"][name])
 
     if len(rankings_for_borda) > 0:
-        borda_rank = borda_count_rank([ranking] + rankings_for_borda)
+        borda_rank = borda_count_rank([ranking] + rankings_for_borda, borda_count_weights)
 
         output_data["borda_count_ranking"] = list(sort_array_with_ranking(np.array(compiled_circuit_ids), borda_rank))
 

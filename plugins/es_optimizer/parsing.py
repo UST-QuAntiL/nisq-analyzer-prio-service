@@ -37,7 +37,7 @@ def parse_metric_info(task_parameters: Dict) -> Tuple[np.ndarray, np.ndarray, Li
     return weights, is_cost, metric_names
 
 
-def get_rankings_for_borda_count(task_parameters: Dict, circuit_index: int) -> List[np.ndarray]:
+def get_rankings_for_borda_count(task_parameters: Dict, circuit_index: int) -> Tuple[List[np.ndarray], List[str]]:
     circuit_data = task_parameters["circuits"][circuit_index]
     borda_metric_names: List[str] = list(task_parameters["borda_count_metrics"].keys())
     borda_metrics = get_metrics_from_compiled_circuits(circuit_data["compiled_circuits"], borda_metric_names)
@@ -47,7 +47,7 @@ def get_rankings_for_borda_count(task_parameters: Dict, circuit_index: int) -> L
         is_cost = task_parameters["borda_count_metrics"][name]["is_cost"]
         rankings.append(convert_scores_to_ranking(borda_metrics[:, i].reshape((-1)), not is_cost))
 
-    return rankings
+    return rankings, borda_metric_names
 
 
 if __name__ == "__main__":
