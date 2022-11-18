@@ -44,7 +44,7 @@ class PredictionView(MethodView):
         print("endpoint:", flask.request.endpoint, flush=True)
         print("content length:", flask.request.content_length, flush=True)
         print("mimetype:", flask.request.mimetype, flush=True)
-        print("truncated request:", flask.request.get_data(as_text=True)[0:100], flush=True)
+        print("request content:", flask.request.get_data(as_text=True), flush=True)
         db_task = ProcessingTask(task_name=prediction_task.name, parameters=schema.dumps(arguments))
         db_task.save(commit=True)
 
