@@ -38,7 +38,7 @@ class PluginView(MethodView):
             name=EsOptimizer.instance.identifier,
             version=EsOptimizer.instance.version,
             # pluin type: "processing"|"visualizing"|"conversion" (actual values still WIP!! confirm with current documentation)
-            type=PluginType.simple,
+            type=PluginType.processing,
             # tags describing the plugin, e.g. ml:autoencoder, ml:svm
             tags=[],
             # the main plugin entry point
