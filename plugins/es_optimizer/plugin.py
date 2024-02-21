@@ -28,4 +28,4 @@ class EsOptimizer(QHAnaPluginBase):
         return PLUGIN_BLP
 
     def get_requirements(self):
-        return "pymcdm==1.0.5\nscipy==1.8.0\nscikit-learn==1.1\nplotly==5.6.0\npandas~=1.5.0"
+        return "pymcdm==1.0.5\nscipy==1.12.0\nscikit-learn==1.4\nplotly==5.6.0\npandas~=1.5.0"
