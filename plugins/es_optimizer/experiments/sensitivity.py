@@ -5,9 +5,10 @@ from multiprocessing import Pool
 import numpy as np
 from pymcdm.methods import TOPSIS, PROMETHEE_II
 
-from .tools.data_loader import load_csv_and_add_headers, get_metrics_and_histogram_intersections
-from ..sensitivity import find_changing_factors
-from ..weights import NormalizedWeights
+from plugins.es_optimizer.experiments.tools.data_loader import load_csv_and_add_headers, \
+    get_metrics_and_histogram_intersections, is_cost
+from plugins.es_optimizer.sensitivity import find_changing_factors
+from plugins.es_optimizer.weights import NormalizedWeights
 
 
 def main(dataset_path: str, learned_weights_path: str):
@@ -30,6 +31,7 @@ def main(dataset_path: str, learned_weights_path: str):
             zip(
                 [mcda] * len(original_weights),
                 [metrics] * len(original_weights),
+                [is_cost] * len(original_weights),
                 original_weights
             )
         ))
@@ -50,4 +52,4 @@ def main(dataset_path: str, learned_weights_path: str):
 
 
 if __name__ == "__main__":
-    main("data/Result_25.csv", "results/Result_25/TOPSIS_es.json")
+    main("data/Result_ionq.csv", "results/Result_ionq/PROMETHEE_II_COBYLA.json")

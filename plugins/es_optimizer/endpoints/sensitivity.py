@@ -24,7 +24,39 @@ from ..plugin import EsOptimizer
 
 @PLUGIN_BLP.route("/rank-sensitivity")
 class ProcessView(MethodView):
-    """Start a long running processing task."""
+    """
+    Description
+    -----------
+    Analyses how sensitive the rankings are to changes in the weights.
+
+    Input
+    -----
+    mcda_method: the MCDA method to be analysed
+    step_size: defines the (multiplicative) step size of the factors (1 + step_size, 1 - step_size)
+    upper_bound: the upper bound of the factors
+    lower_bound: the lower bound of the factors
+    metric_weights: the weights to be analysed
+    borda_count_metrics: list of metric names that will be ranked and combined with the histogram intersection ranking
+        with borda count
+    borda_count_weights (optional): weights for borda count
+    circuits: the compiled circuits with QPU metrics of a single circuit implementation
+
+    Output
+    ------
+    sensitivity.json
+        original_scores: scores calculated by the MCDA method using the unaltered weights
+        original_ranking: ranking of the original scores
+        original_borda_count_ranking (optional): borda count ranking with the unaltered weights
+        decreasing_factors: biggest factors < 1.0 that changed the ranking (for each weight)
+        disturbed_ranks_decreased: the disturbed rankings that have been produced by the corresponding decreasing factors
+        disturbed_borda_ranks_decreased (optional): board count rankings with the disturbed ranks
+        increasing_factors: smallest factor > 1.0 that changed the ranking (for each weight)
+        disturbed_ranks_increased: the disturbed rankings that have been produced by the corresponding increasing factors
+        disturbed_borda_ranks_increased (optional): board count rankings with the disturbed ranks
+
+    plot.html
+        A plot with the results of the sensitivity analysis.
+    """
 
     @PLUGIN_BLP.arguments(RankSensitivitySchema(unknown=EXCLUDE), location="json")
     @PLUGIN_BLP.response(HTTPStatus.SEE_OTHER)

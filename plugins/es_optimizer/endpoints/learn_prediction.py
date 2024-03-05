@@ -28,7 +28,32 @@ from ..tools.ranking import convert_scores_to_ranking, sort_array_with_ranking
 
 @PLUGIN_BLP.route("/prediction")
 class PredictionView(MethodView):
-    """Start a long running processing task."""
+    """
+    Description
+    -----------
+    Trains a regressor and optionally a meta-regressor on a dataset of multiple circuit implementations and compiled
+    circuits to predict the histogram intersections for the compiled circuits of a new circuit implementation.
+
+    Input
+    -----
+    machine_learning_method: regression ML method
+    meta_regressor: meta regressor or none
+    training_data: multiple implementations and there compiled circuits with QPU metrics to be used as training data
+    new_circuit: new circuit implementation with its compiled circuits and QPU metrics for which the histogram
+        intersections should be predicted
+    input_metric_names: list of the metric names that will be used as input to the regressor
+    compiler_property_name: key under which the compiler can be found
+    histogram_intersection_name: key under which the histogram intersection can be found
+    queue_size_name: key under which the queue size can be found
+    queue_size_importance: factor which controls the influence of the queue size for the borda count ranking
+
+    Output
+    ------
+    predicted_histogram_intersections: predicted histogram intersections for the new circuit implementation
+    ranking: ranking based on the predicted histogram intersections
+    borda_count_ranking: ranking that combines the predicted histogram intersections with the queue size
+
+    """
 
     @PLUGIN_BLP.arguments(LearnPredictionSchema(unknown=EXCLUDE), location="json")
     @PLUGIN_BLP.response(HTTPStatus.SEE_OTHER)
@@ -79,7 +104,7 @@ def _convert_compilers_to_one_hot_encoding(data, task_parameters: LearnPredictio
     compiler_data = data[task_parameters.compiler_property_name].to_numpy().reshape((-1, 1))
 
     if encoder is None:
-        encoder = OneHotEncoder(sparse=False)
+        encoder = OneHotEncoder(sparse_output=False)
         compilers_encoded: np.ndarray = encoder.fit_transform(compiler_data)
     else:
         compilers_encoded: np.ndarray = encoder.transform(compiler_data)

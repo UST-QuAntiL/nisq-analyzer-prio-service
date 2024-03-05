@@ -41,7 +41,7 @@ dtypes = {
 
 
 def load_csv_and_add_headers(file_path: str) -> DataFrame:
-    data = pd.read_csv(file_path, header=None, names=all_column_names, dtype=dtypes)
+    data = pd.read_csv(file_path, header=None, names=all_column_names, usecols=range(0, len(all_column_names)), dtype=dtypes)
 
     return data
 

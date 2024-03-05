@@ -22,7 +22,27 @@ from ..plugin import EsOptimizer
 
 @PLUGIN_BLP.route("/rank")
 class ProcessView(MethodView):
-    """Start a long running processing task."""
+    """
+    Description
+    -----------
+    This endpoint ranks the circuits with the specified MCDA method and weights.
+
+    Input
+    -----
+    mcda_method: MCDA method (TOPSIS, PROMETHEE II)
+    metric_weights: weights for the metrics to be used in the MCDA method
+    borda_count_metrics: Borda count can be used to combine multiple rankings. For every metric that is given in this
+        input a ranking will be created and combined with the ranking calculated by the MCDA method.
+    borda_count_weights (optional): Weights for the different rankings that should be combined with Borda count.
+        Use "result_precision" for the name of the ranking created by the MCDA method.
+    circuits: metrics of multiple compiled circuits and QPUs for a single circuit implementation
+
+    Output
+    ------
+    scores: raw scores for each compiled circuit
+    ranking: ranking calculated by the chosen MCDA method (best compiled circuit first)
+    borda_count_ranking (optional): combined ranking calculated by borda count
+    """
 
     @PLUGIN_BLP.arguments(RankSchema(unknown=EXCLUDE), location="json")
     @PLUGIN_BLP.response(HTTPStatus.SEE_OTHER)

@@ -22,7 +22,28 @@ from ..plugin import EsOptimizer
 
 @PLUGIN_BLP.route("/learn-ranking")
 class LearnRankingView(MethodView):
-    """Start a long running processing task."""
+    """
+    Description
+    -----------
+    This endpoint will optimize weights for a MCDA method for compiled quantum circuits. The optimization goal is that
+    the MCDA method gives the same (normalized) scores as the given histogram intersections.
+
+    Input
+    -----
+    mcda_method: MCDA method for which weights will be optimized
+    learning_method: learning method to be used to optimize the weights (es, ga, scipy minimizer)
+    metric_weights: defines the metrics to be used and whether they represent a cost or not
+        [metric name]: (histogram_intersection must be present)
+            weight: this value will be ignored
+            is_cost: true = lower is better, false = higher is better
+    circuits: multiple circuit implementations and their compiled circuits and QPU metrics
+
+    Output
+    ------
+    [metric name]:
+        normalized_weight: learned weights for the MCDA method
+        is_cost: true = lower is better, false = higher is better
+    """
 
     @PLUGIN_BLP.arguments(LearnRankingSchema(unknown=EXCLUDE), location="json")
     @PLUGIN_BLP.response(HTTPStatus.SEE_OTHER)
