@@ -1,0 +1,1112 @@
+{
+  "openapi" : "3.0.2",
+  "info" : {
+    "title" : "QHAna plugin runner api.",
+    "version" : "v1"
+  },
+  "servers" : [ {
+    "url" : "/"
+  } ],
+  "tags" : [ {
+    "name" : "api-root",
+    "description" : "The API endpoint pointing towards all api versions."
+  }, {
+    "name" : "plugins-api",
+    "description" : "Api to request a list of loaded plugins."
+  }, {
+    "name" : "tasks-api",
+    "description" : "Api to request results of an async task."
+  }, {
+    "name" : "files-api",
+    "description" : "Api to download task result files."
+  }, {
+    "name" : "templates-api",
+    "description" : "Api to request a list of loaded templates."
+  }, {
+    "name" : "es-optimizer@v0-1-0",
+    "description" : "ES-Optimizer plugin API."
+  } ],
+  "paths" : {
+    "/" : {
+      "get" : {
+        "tags" : [ "api-root" ],
+        "summary" : "Get the Root API information containing the links other endpoints of this api.",
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/VersionsRoot"
+                }
+              }
+            }
+          },
+          "default" : {
+            "description" : "Default error response",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/plugins/" : {
+      "get" : {
+        "tags" : [ "plugins-api" ],
+        "summary" : "Get all loaded plugins.",
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PluginCollection"
+                }
+              }
+            }
+          },
+          "default" : {
+            "description" : "Default error response",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/plugins/{plugin}/" : {
+      "get" : {
+        "tags" : [ "plugins-api" ],
+        "summary" : "Redirect to the newest version of a plugin.",
+        "parameters" : [ {
+          "name" : "plugin",
+          "in" : "path",
+          "required" : true,
+          "style" : "simple",
+          "explode" : false,
+          "schema" : {
+            "minLength" : 1,
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "307" : {
+            "description" : "Temporary Redirect"
+          },
+          "default" : {
+            "description" : "Default error response",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/tasks/{task_id}/" : {
+      "get" : {
+        "tags" : [ "tasks-api" ],
+        "summary" : "Get the current task status.",
+        "parameters" : [ {
+          "name" : "task_id",
+          "in" : "path",
+          "required" : true,
+          "style" : "simple",
+          "explode" : false,
+          "schema" : {
+            "minimum" : 0,
+            "type" : "integer"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/TaskStatus"
+                }
+              }
+            }
+          },
+          "default" : {
+            "description" : "Default error response",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/files/{file_id}/" : {
+      "get" : {
+        "tags" : [ "files-api" ],
+        "summary" : "Get the task file information by file id.",
+        "parameters" : [ {
+          "name" : "file_id",
+          "in" : "path",
+          "required" : true,
+          "style" : "simple",
+          "explode" : false,
+          "schema" : {
+            "minimum" : 0,
+            "type" : "integer"
+          }
+        }, {
+          "name" : "file-id",
+          "in" : "query",
+          "description" : "The security tag of the file.",
+          "required" : true,
+          "style" : "form",
+          "explode" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          },
+          "422" : {
+            "description" : "Unprocessable Entity",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "default" : {
+            "description" : "Default error response",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/templates/" : {
+      "get" : {
+        "tags" : [ "templates-api" ],
+        "summary" : "Get all loaded templates.",
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/TemplateCollection"
+                }
+              }
+            }
+          },
+          "default" : {
+            "description" : "Default error response",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/plugins/es-optimizer@v0-1-0/" : {
+      "get" : {
+        "tags" : [ "es-optimizer@v0-1-0" ],
+        "summary" : "Endpoint returning the plugin metadata.",
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PluginMetadata"
+                }
+              }
+            }
+          },
+          "default" : {
+            "description" : "Default error response",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security" : [ { }, {
+          "jwt" : [ ]
+        } ]
+      }
+    },
+    "/plugins/es-optimizer@v0-1-0/rank" : {
+      "post" : {
+        "tags" : [ "es-optimizer@v0-1-0" ],
+        "summary" : "Start the background task.",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/Rank"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "303" : {
+            "description" : "See Other"
+          },
+          "422" : {
+            "description" : "Unprocessable Entity",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "default" : {
+            "description" : "Default error response",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security" : [ { }, {
+          "jwt" : [ ]
+        } ]
+      }
+    },
+    "/plugins/es-optimizer@v0-1-0/learn-ranking" : {
+      "post" : {
+        "tags" : [ "es-optimizer@v0-1-0" ],
+        "summary" : "Start the background task.",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/LearnRanking"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "303" : {
+            "description" : "See Other"
+          },
+          "422" : {
+            "description" : "Unprocessable Entity",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "default" : {
+            "description" : "Default error response",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security" : [ { }, {
+          "jwt" : [ ]
+        } ]
+      }
+    },
+    "/plugins/es-optimizer@v0-1-0/rank-sensitivity" : {
+      "post" : {
+        "tags" : [ "es-optimizer@v0-1-0" ],
+        "summary" : "Start the background task.",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/RankSensitivity"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "303" : {
+            "description" : "See Other"
+          },
+          "422" : {
+            "description" : "Unprocessable Entity",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "default" : {
+            "description" : "Default error response",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security" : [ { }, {
+          "jwt" : [ ]
+        } ]
+      }
+    },
+    "/plugins/es-optimizer@v0-1-0/prediction" : {
+      "post" : {
+        "tags" : [ "es-optimizer@v0-1-0" ],
+        "summary" : "Start the background task.",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/LearnPrediction"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "303" : {
+            "description" : "See Other"
+          },
+          "422" : {
+            "description" : "Unprocessable Entity",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "default" : {
+            "description" : "Default error response",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security" : [ { }, {
+          "jwt" : [ ]
+        } ]
+      }
+    }
+  },
+  "components" : {
+    "schemas" : {
+      "Error" : {
+        "type" : "object",
+        "properties" : {
+          "message" : {
+            "type" : "string",
+            "description" : "Error message"
+          },
+          "errors" : {
+            "type" : "object",
+            "description" : "Errors"
+          },
+          "status" : {
+            "type" : "string",
+            "description" : "Error name"
+          },
+          "code" : {
+            "type" : "integer",
+            "description" : "Error code"
+          }
+        }
+      },
+      "PaginationMetadata" : {
+        "type" : "object",
+        "properties" : {
+          "total" : {
+            "type" : "integer"
+          },
+          "total_pages" : {
+            "type" : "integer"
+          },
+          "first_page" : {
+            "type" : "integer"
+          },
+          "last_page" : {
+            "type" : "integer"
+          },
+          "page" : {
+            "type" : "integer"
+          },
+          "previous_page" : {
+            "type" : "integer"
+          },
+          "next_page" : {
+            "type" : "integer"
+          }
+        }
+      },
+      "VersionsRoot" : {
+        "required" : [ "title" ],
+        "type" : "object",
+        "properties" : {
+          "title" : {
+            "type" : "string",
+            "readOnly" : true
+          }
+        }
+      },
+      "Plugin" : {
+        "required" : [ "description", "identifier", "name", "tags", "version" ],
+        "type" : "object",
+        "properties" : {
+          "version" : {
+            "type" : "string",
+            "readOnly" : true
+          },
+          "apiRoot" : {
+            "type" : "string",
+            "format" : "url",
+            "readOnly" : true
+          },
+          "identifier" : {
+            "type" : "string",
+            "readOnly" : true
+          },
+          "description" : {
+            "type" : "string",
+            "readOnly" : true
+          },
+          "tags" : {
+            "type" : "array",
+            "readOnly" : true,
+            "items" : {
+              "type" : "string"
+            }
+          },
+          "name" : {
+            "type" : "string",
+            "readOnly" : true
+          }
+        }
+      },
+      "PluginCollection" : {
+        "type" : "object",
+        "properties" : {
+          "plugins" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/Plugin"
+            }
+          }
+        }
+      },
+      "StepMetadata" : {
+        "required" : [ "href", "uiHref" ],
+        "type" : "object",
+        "properties" : {
+          "cleared" : {
+            "type" : "boolean",
+            "description" : "``false`` if step is awaiting input, only last step in list can be marked as ``false``."
+          },
+          "href" : {
+            "type" : "string",
+            "description" : "The URL of the REST entry point resource."
+          },
+          "stepId" : {
+            "type" : "string",
+            "description" : "ID of step, e.g., ``\"step1\"`` or ``\"step1.step2b\"``."
+          },
+          "uiHref" : {
+            "type" : "string",
+            "description" : "The URL of the micro frontend that corresponds to the REST entry point resource."
+          }
+        }
+      },
+      "ProgressMetadata" : {
+        "required" : [ "value" ],
+        "type" : "object",
+        "properties" : {
+          "unit" : {
+            "type" : "string",
+            "description" : "The progress unit."
+          },
+          "target" : {
+            "type" : "integer",
+            "description" : "The progress target value."
+          },
+          "value" : {
+            "type" : "integer",
+            "description" : "The progress value."
+          },
+          "start" : {
+            "type" : "integer",
+            "description" : "The progress start value."
+          }
+        }
+      },
+      "OutputDataMetadata" : {
+        "required" : [ "contentType", "dataType", "href" ],
+        "type" : "object",
+        "properties" : {
+          "href" : {
+            "type" : "string",
+            "description" : "The URL of the output data.",
+            "format" : "url"
+          },
+          "dataType" : {
+            "type" : "string",
+            "description" : "The type of the output data (e.g. distance-matrix)."
+          },
+          "contentType" : {
+            "type" : "string",
+            "description" : "The media type (mime type) of the output data (e.g. application/json)."
+          },
+          "name" : {
+            "type" : "string",
+            "description" : "An optional human readable name for the output data.",
+            "nullable" : true
+          }
+        }
+      },
+      "TaskStatus" : {
+        "required" : [ "status" ],
+        "type" : "object",
+        "properties" : {
+          "steps" : {
+            "type" : "array",
+            "nullable" : true,
+            "readOnly" : true,
+            "items" : {
+              "$ref" : "#/components/schemas/StepMetadata"
+            }
+          },
+          "progress" : {
+            "nullable" : true,
+            "readOnly" : true,
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/ProgressMetadata"
+            } ]
+          },
+          "log" : {
+            "type" : "string",
+            "nullable" : true,
+            "readOnly" : true
+          },
+          "status" : {
+            "type" : "string",
+            "readOnly" : true
+          },
+          "outputs" : {
+            "type" : "array",
+            "nullable" : true,
+            "readOnly" : true,
+            "items" : {
+              "$ref" : "#/components/schemas/OutputDataMetadata"
+            }
+          }
+        }
+      },
+      "CategoryData" : {
+        "required" : [ "description", "identifier", "name", "pluginFilter" ],
+        "type" : "object",
+        "properties" : {
+          "description" : {
+            "type" : "string",
+            "readOnly" : true
+          },
+          "pluginFilter" : {
+            "readOnly" : true
+          },
+          "identifier" : {
+            "type" : "string",
+            "readOnly" : true
+          },
+          "name" : {
+            "type" : "string",
+            "readOnly" : true
+          }
+        }
+      },
+      "TemplateData" : {
+        "required" : [ "description", "identifier", "name" ],
+        "type" : "object",
+        "properties" : {
+          "description" : {
+            "type" : "string",
+            "readOnly" : true
+          },
+          "identifier" : {
+            "type" : "string",
+            "readOnly" : true
+          },
+          "name" : {
+            "type" : "string",
+            "readOnly" : true
+          },
+          "categories" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/CategoryData"
+            }
+          }
+        }
+      },
+      "TemplateCollection" : {
+        "type" : "object",
+        "properties" : {
+          "templates" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/TemplateData"
+            }
+          }
+        }
+      },
+      "InputDataMetadata" : {
+        "required" : [ "contentType", "dataType", "required" ],
+        "type" : "object",
+        "properties" : {
+          "dataType" : {
+            "type" : "string",
+            "description" : "The type of the output (e.g. distance-matrix)."
+          },
+          "contentType" : {
+            "type" : "array",
+            "description" : "The media type (mime type) of the output data (e.g. application/json).",
+            "items" : {
+              "type" : "string"
+            }
+          },
+          "required" : {
+            "type" : "boolean",
+            "description" : "If the data is required or not."
+          },
+          "parameter" : {
+            "type" : "string",
+            "description" : "The parameter where the input should be available at."
+          }
+        }
+      },
+      "OutputDataMetadata1" : {
+        "required" : [ "contentType", "dataType", "required" ],
+        "type" : "object",
+        "properties" : {
+          "dataType" : {
+            "type" : "string",
+            "description" : "The type of the output (e.g. distance-matrix)."
+          },
+          "name" : {
+            "type" : "string",
+            "description" : "The name of the produced output data.",
+            "nullable" : true
+          },
+          "contentType" : {
+            "type" : "array",
+            "description" : "The media type (mime type) of the output data (e.g. application/json).",
+            "items" : {
+              "type" : "string"
+            }
+          },
+          "required" : {
+            "type" : "boolean",
+            "description" : "If the data is required or not."
+          }
+        }
+      },
+      "PluginDependencyMetadata" : {
+        "required" : [ "parameter", "required" ],
+        "type" : "object",
+        "properties" : {
+          "version" : {
+            "pattern" : "(>=?)?(v?[0-9]+(\\.[0-9]+(\\.[0-9]+)))(?:\\s+(<=?)(v?[0-9]+(\\.[0-9]+(\\.[0-9]+))))?",
+            "type" : "string",
+            "description" : "The version of the plugin dependency. Examples: 'v1' (matches v1.?.?), 'v1.2.0', '>=v1.1.3', '>=v1.1.3 <v2.0.0'"
+          },
+          "parameter" : {
+            "type" : "string",
+            "description" : "The parameter where the plugin url should be available at."
+          },
+          "type" : {
+            "type" : "string",
+            "description" : "Type of the plugin dependency.",
+            "enum" : [ "simple", "complex", "processing", "visualization", "conversion" ]
+          },
+          "required" : {
+            "type" : "boolean",
+            "description" : "If the data is required or not."
+          },
+          "tags" : {
+            "type" : "array",
+            "description" : "A list of tags required to match a plugin. Tags startign with '!' must not be present on the plugin.",
+            "items" : {
+              "type" : "string"
+            }
+          },
+          "name" : {
+            "type" : "string",
+            "description" : "The name of the plugin dependency. Must be an exact match."
+          }
+        }
+      },
+      "EntryPoint" : {
+        "required" : [ "href", "uiHref" ],
+        "type" : "object",
+        "properties" : {
+          "dataInput" : {
+            "type" : "array",
+            "items" : {
+              "description" : "A list of possible data inputs.",
+              "allOf" : [ {
+                "$ref" : "#/components/schemas/InputDataMetadata"
+              } ]
+            }
+          },
+          "href" : {
+            "type" : "string",
+            "description" : "The URL of the REST entry point resource.",
+            "format" : "url"
+          },
+          "dataOutput" : {
+            "type" : "array",
+            "items" : {
+              "description" : "A list of possible data outputs.",
+              "allOf" : [ {
+                "$ref" : "#/components/schemas/OutputDataMetadata1"
+              } ]
+            }
+          },
+          "pluginDependencies" : {
+            "type" : "array",
+            "items" : {
+              "description" : "A list of possible plugin dependencies inputs.",
+              "allOf" : [ {
+                "$ref" : "#/components/schemas/PluginDependencyMetadata"
+              } ]
+            }
+          },
+          "uiHref" : {
+            "type" : "string",
+            "description" : "The URL of the micro frontend that corresponds to the REST entry point resource.",
+            "format" : "url"
+          }
+        }
+      },
+      "PluginMetadata" : {
+        "required" : [ "description", "entryPoint", "name", "tags", "title", "type", "version" ],
+        "type" : "object",
+        "properties" : {
+          "version" : {
+            "type" : "string",
+            "description" : "Version of the plugin.",
+            "readOnly" : true
+          },
+          "type" : {
+            "type" : "string",
+            "description" : "Type of the plugin",
+            "readOnly" : true,
+            "enum" : [ "simple", "complex", "processing", "visualization", "conversion" ]
+          },
+          "entryPoint" : {
+            "description" : "The entry point of the plugin",
+            "readOnly" : true,
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/EntryPoint"
+            } ]
+          },
+          "description" : {
+            "type" : "string",
+            "description" : "Human readable plugin description.",
+            "readOnly" : true
+          },
+          "tags" : {
+            "type" : "array",
+            "description" : "A list of tags describing the plugin (e.g. classical-algorithm, quantum-algorithm, hybrid-algorithm).",
+            "readOnly" : true,
+            "items" : {
+              "type" : "string"
+            }
+          },
+          "title" : {
+            "type" : "string",
+            "description" : "Human readable plugin title.",
+            "readOnly" : true
+          },
+          "name" : {
+            "type" : "string",
+            "description" : "Unique name of the plugin.",
+            "readOnly" : true
+          }
+        }
+      },
+      "Metric" : {
+        "required" : [ "isCost", "weight" ],
+        "type" : "object",
+        "properties" : {
+          "weight" : {
+            "type" : "number"
+          },
+          "isCost" : {
+            "type" : "boolean"
+          }
+        }
+      },
+      "BordaCount" : {
+        "required" : [ "isCost" ],
+        "type" : "object",
+        "properties" : {
+          "isCost" : {
+            "type" : "boolean"
+          }
+        }
+      },
+      "Circuit" : {
+        "required" : [ "compiledCircuits", "id" ],
+        "type" : "object",
+        "properties" : {
+          "id" : {
+            "type" : "string"
+          },
+          "compiledCircuits" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object"
+            }
+          }
+        }
+      },
+      "Rank" : {
+        "required" : [ "bordaCountMetrics", "circuits", "mcdaMethod", "metricWeights" ],
+        "type" : "object",
+        "properties" : {
+          "mcdaMethod" : {
+            "type" : "string"
+          },
+          "metricWeights" : {
+            "type" : "object",
+            "additionalProperties" : {
+              "$ref" : "#/components/schemas/Metric"
+            }
+          },
+          "bordaCountMetrics" : {
+            "type" : "object",
+            "additionalProperties" : {
+              "$ref" : "#/components/schemas/BordaCount"
+            }
+          },
+          "bordaCountWeights" : {
+            "type" : "object",
+            "additionalProperties" : {
+              "type" : "number"
+            },
+            "nullable" : true
+          },
+          "circuits" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/Circuit"
+            }
+          }
+        }
+      },
+      "LearnRanking" : {
+        "required" : [ "circuits", "learningMethod", "mcdaMethod", "metricWeights" ],
+        "type" : "object",
+        "properties" : {
+          "mcdaMethod" : {
+            "type" : "string"
+          },
+          "learningMethod" : {
+            "type" : "string"
+          },
+          "metricWeights" : {
+            "type" : "object",
+            "additionalProperties" : {
+              "$ref" : "#/components/schemas/Metric"
+            }
+          },
+          "circuits" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/Circuit"
+            }
+          }
+        }
+      },
+      "RankSensitivity" : {
+        "required" : [ "bordaCountMetrics", "circuits", "lowerBound", "mcdaMethod", "metricWeights", "stepSize", "upperBound" ],
+        "type" : "object",
+        "properties" : {
+          "mcdaMethod" : {
+            "type" : "string"
+          },
+          "stepSize" : {
+            "type" : "number"
+          },
+          "upperBound" : {
+            "type" : "number"
+          },
+          "lowerBound" : {
+            "type" : "number"
+          },
+          "metricWeights" : {
+            "type" : "object",
+            "additionalProperties" : {
+              "$ref" : "#/components/schemas/Metric"
+            }
+          },
+          "bordaCountMetrics" : {
+            "type" : "object",
+            "additionalProperties" : {
+              "$ref" : "#/components/schemas/BordaCount"
+            }
+          },
+          "bordaCountWeights" : {
+            "type" : "object",
+            "additionalProperties" : {
+              "type" : "number"
+            },
+            "nullable" : true
+          },
+          "circuits" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/Circuit"
+            }
+          }
+        }
+      },
+      "OriginalCircuit" : {
+        "required" : [ "id", "originalCircuitAndQpuMetrics" ],
+        "type" : "object",
+        "properties" : {
+          "id" : {
+            "type" : "string"
+          },
+          "originalCircuitAndQpuMetrics" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object"
+            }
+          }
+        }
+      },
+      "LearnPrediction" : {
+        "required" : [ "compilerPropertyName", "histogramIntersectionName", "inputMetricNames", "machineLearningMethod", "metaRegressor", "newCircuit", "queueSizeImportance", "queueSizeName", "trainingData" ],
+        "type" : "object",
+        "properties" : {
+          "machineLearningMethod" : { },
+          "metaRegressor" : { },
+          "trainingData" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/OriginalCircuit"
+            }
+          },
+          "newCircuit" : {
+            "$ref" : "#/components/schemas/OriginalCircuit"
+          },
+          "inputMetricNames" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          },
+          "compilerPropertyName" : {
+            "type" : "string"
+          },
+          "histogramIntersectionName" : {
+            "type" : "string"
+          },
+          "queueSizeName" : {
+            "type" : "string"
+          },
+          "queueSizeImportance" : {
+            "type" : "number"
+          }
+        }
+      }
+    },
+    "responses" : {
+      "DEFAULT_ERROR" : {
+        "description" : "Default error response",
+        "content" : {
+          "application/json" : {
+            "schema" : {
+              "$ref" : "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "UNPROCESSABLE_ENTITY" : {
+        "description" : "Unprocessable Entity",
+        "content" : {
+          "application/json" : {
+            "schema" : {
+              "$ref" : "#/components/schemas/Error"
+            }
+          }
+        }
+      }
+    },
+    "securitySchemes" : {
+      "jwt" : {
+        "type" : "http",
+        "description" : "The jwt access token as returned by login or refresh.",
+        "scheme" : "bearer",
+        "bearerFormat" : "JWT"
+      },
+      "jwt-refresh-token" : {
+        "type" : "http",
+        "description" : "The jwt refresh token as returned by login. Must only be used to get a new access token.",
+        "scheme" : "bearer",
+        "bearerFormat" : "JWT"
+      }
+    }
+  }
+}

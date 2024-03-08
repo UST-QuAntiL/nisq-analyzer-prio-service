@@ -1,6 +1,7 @@
 # QHAna Plugin "ES Optimizer"
 
-An optimizer using an evolutionary strategy.
+Also known as Predict & Prio Service to predict suitable combinations of circuits, compilers, and quantum computers via different implementations of ML algorithms.
+Furthermore, the plugin enables the ranking of compilation results via various MCDA methods and optimizers. 
 
 ## Requirements
 
@@ -112,7 +113,12 @@ To explore all implemented QHAna plugins start the docker-compose file with `doc
 
 Documentation for the QHAna Plugin-Runner that is used to execute the plugins in the `plugins` folder can be found here: <https://qhana-plugin-runner.readthedocs.io/en/latest/>.
 For documentation on how to write aplugin directly go to <https://qhana-plugin-runner.readthedocs.io/en/latest/plugins.html>
+  
+The OpenAPI specification of the Plugin via running QHAna Plugin Runner can be viewed here: http://localhost:5005/swagger-ui/  
+The OpenAPI specification is also statically available:
 
+[OpenAPI JSON](./docs/api/openapi.json)  
+[OpenAPi YAML](./docs/api/openapi.yaml)
 
 ## QHAna Repositories
 
