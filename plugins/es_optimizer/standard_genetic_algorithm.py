@@ -11,6 +11,13 @@ from .weights import Weights, NormalizedWeights
 
 def roulette_wheel_selection(weights: np.ndarray, fitness: np.ndarray, rng: np.random.Generator) -> np.ndarray:
     zero_min_fitness = fitness - np.nanmin(fitness)
+
+    sum_value = np.nansum(zero_min_fitness)
+
+    if sum_value == 0:
+        # all values in fitness are the same, so we want the probabilities to be the same as well
+        zero_min_fitness = np.ones_like(zero_min_fitness)
+
     probability: np.ndarray = zero_min_fitness / np.nansum(zero_min_fitness)
 
     probability[np.isnan(probability)] = 0

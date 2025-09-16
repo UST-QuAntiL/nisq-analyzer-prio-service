@@ -15,13 +15,28 @@ def objective_function(mcda: MCDA_method, metrics: np.ndarray, histogram_interse
 
     # normalization
     normalized_target_scores = target_scores - np.min(target_scores)
-    normalized_target_scores /= np.max(normalized_target_scores)
+    max_value = np.max(normalized_target_scores)
+
+    if max_value == 0.0:
+        # target_scores are all the same, we define the normalized values in this edge case as 0.5 for all elements
+        normalized_target_scores = np.ones_like(normalized_target_scores) * 0.5
+    else:
+        normalized_target_scores /= max_value
 
     normalized_scores = scores - np.min(scores)
-    normalized_scores /= np.max(normalized_scores)
+    max_value = np.max(normalized_scores)
+
+    if max_value == 0.0:
+        # scores are all the same, we define the normalized values in this edge case as 0.5 for all elements
+        normalized_scores = np.ones_like(normalized_scores) * 0.5
+    else:
+        normalized_scores /= max_value
 
     # mean square error
     loss = np.mean((normalized_target_scores - normalized_scores) * (normalized_target_scores - normalized_scores))
+
+    if np.isnan(loss.item()):
+        TASK_LOGGER.error("loss is NaN")
 
     return loss.item()
 
